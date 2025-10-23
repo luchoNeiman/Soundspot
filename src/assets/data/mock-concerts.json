@@ -1,0 +1,46 @@
+[
+    {
+        "id": 1,
+        "artista": "Soda Stereo",
+        "lugar": "Estadio River Plate",
+        "ciudad": "Buenos Aires",
+        "fecha": "2025-12-20",
+        "precio": 150,
+        "imagen": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Soda_Stereo_Punta_del_Este_1986.jpg/1200px-Soda_Stereo_Punta_del_Este_1986.jpg",
+        "lat": -34.5453,
+        "lng": -58.4498
+    },
+    {
+        "id": 2,
+        "artista": "Indio Solari",
+        "lugar": "Hipódromo de Tandil",
+        "ciudad": "Tandil",
+        "fecha": "2025-11-15",
+        "precio": 100,
+        "imagen": "https://indiosolari.com/wp-content/uploads/2017/02/indio-solari-y-los-fundamentalistas-del-aire-acondicionado.jpg",
+        "lat": -37.3217,
+        "lng": -59.1332
+    },
+    {
+        "id": 3,
+        "artista": "La Renga",
+        "lugar": "Estadio Único de La Plata",
+        "ciudad": "La Plata",
+        "fecha": "2026-01-25",
+        "precio": 120,
+        "imagen": "https://www.clarin.com/img/2022/04/29/la-renga-en-el-estadio-unico-de-la-plata_1200x630__GjA1j-x3u.jpg",
+        "lat": -34.914,
+        "lng": -57.9946
+    },
+    {
+        "id": 4,
+        "artista": "Fito Páez",
+        "lugar": "Movistar Arena",
+        "ciudad": "Buenos Aires",
+        "fecha": "2025-10-30",
+        "precio": 180,
+        "imagen": "https://www.billboard.com/wp-content/uploads/2023/04/fito-paez-billboard-1548.jpg",
+        "lat": -34.585,
+        "lng": -58.452
+    }
+]
