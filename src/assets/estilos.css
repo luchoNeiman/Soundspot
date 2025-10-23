@@ -1,12 +1,8 @@
-/* src/assets/estilos.css */
 :root {
     /* Paleta de Colores */
     --color-primario: #6A11CB;
-    /* Violeta */
     --color-secundario: #FC466B;
-    /* Rosa */
     --color-fondo: #1A1A1A;
-    /* Gris oscuro */
     --color-superficie: #282828;
     /* Gris para tarjetas/elementos elevados */
     --color-texto-principal: #E0E0E0;
@@ -14,31 +10,33 @@
     --color-texto-secundario: #B0B0B0;
     /* Gris suave */
     --color-exito: #1DB954;
-    /* Verde */
     --color-borde: #444;
-    /* Borde sutil */
     --color-error: #dc3545;
     /* Rojo para errores */
+    --color-info: #0dcaf0;
+    /* Color info de Bootstrap */
+    --color-warning: #ffc107;
+    /* Color warning de Bootstrap */
 
     /* Tipografía */
     --fuente-titulos: 'Montserrat', sans-serif;
     --fuente-parrafos: 'Poppins', sans-serif;
     --tamano-fuente-base: 1rem;
-    /* 16px por defecto, ajustable por el usuario */
+    /* 16px por defecto, aunque lo puedo ajustar */
     --linea-altura-base: 1.6;
 
-    /* Espaciados y Radios (usando rem para escalabilidad) */
+    /* Espaciados y Radios */
     --espaciado-base: 1rem;
     --radio-borde: 0.5rem;
-    /* Bordes redondeados */
 
-    /* Sobrescribir variables de Bootstrap con nuestras definiciones */
+    /* Sobrescribir variables de Bootstrap con mi estetica */
     --bs-body-bg: var(--color-fondo);
     --bs-body-color: var(--color-texto-principal);
     --bs-link-color: var(--color-secundario);
     --bs-link-hover-color: color-mix(in srgb, var(--color-secundario) 80%, white);
-    /* Más claro al hover */
     --bs-border-color: var(--color-borde);
+    --bs-border-color-translucent: rgba(255, 255, 255, 0.15);
+    /* Ajustado para tema oscuro */
     --bs-secondary-color: var(--color-texto-secundario);
     --bs-emphasis-color: var(--color-texto-principal);
     --bs-border-radius: var(--radio-borde);
@@ -66,12 +64,16 @@
     /* Sombra de foco más visible */
     --bs-btn-disabled-opacity: 0.5;
 
+    /* Botón Outline Light */
+    --bs-light-rgb: 224, 224, 224;
+    --bs-body-color-rgb: 224, 224, 224;
+    /* Necesario para que hover/active funcionen bien */
+
     /* Cards */
     --bs-card-bg: var(--color-superficie);
     --bs-card-border-color: var(--color-borde);
     --bs-card-color: var(--color-texto-principal);
     --bs-card-cap-bg: rgba(0, 0, 0, 0.1);
-    /* Encabezado/pie ligeramente diferente */
     --bs-card-spacer-y: calc(var(--espaciado-base) * 1.25);
     --bs-card-spacer-x: calc(var(--espaciado-base) * 1.25);
 
@@ -88,6 +90,7 @@
     --bs-input-focus-border-color: color-mix(in srgb, var(--color-primario) 70%, white);
     /* Más claro al foco */
     --bs-input-focus-box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.35);
+    --bs-input-placeholder-color: color-mix(in srgb, var(--color-texto-secundario) 70%, transparent);
 
     /* Header */
     --bs-dark-rgb: 40, 40, 40;
@@ -95,35 +98,46 @@
     --bs-navbar-padding-y: calc(var(--espaciado-base) * 0.75);
     --bs-navbar-brand-font-size: 1.5rem;
     /* Ajuste tamaño nombre app */
+    --bs-navbar-brand-color: var(--bs-emphasis-color);
+    /* Que el brand use el color de texto principal */
+    --bs-navbar-color: rgba(var(--bs-emphasis-color-rgb), 0.65);
+    /* Links un poco más tenues */
+    --bs-navbar-hover-color: rgba(var(--bs-emphasis-color-rgb), 0.85);
+    --bs-navbar-active-color: var(--bs-emphasis-color);
+    /* Activo con color principal */
+    --bs-navbar-toggler-border-color: rgba(var(--bs-emphasis-color-rgb), 0.15);
+    --bs-navbar-toggler-icon-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28224, 224, 224, 0.65%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
 
     /* Alertas */
     --bs-alert-bg: transparent;
     /* Fondo transparente por defecto */
     --bs-alert-border-width: 1px;
-    /* Colores específicos para alertas (ejemplo warning) */
-    --bs-warning-rgb: 255, 193, 7;
-    --bs-warning-text-emphasis: #{$color-warning-text-emphasis};
-    --bs-warning-bg-subtle: #{$color-warning-bg-subtle};
-    --bs-warning-border-subtle: #{$color-warning-border-subtle};
-    --bs-alert-color: var(--bs-warning-text-emphasis);
-    --bs-alert-bg: var(--bs-warning-bg-subtle);
-    --bs-alert-border-color: var(--bs-warning-border-subtle);
 
-    /* Colores específicos para alerta info */
-    --bs-info-rgb: 13, 202, 240;
-    --bs-info-text-emphasis: #{$color-info-text-emphasis};
-    --bs-info-bg-subtle: #{$color-info-bg-subtle};
-    --bs-info-border-subtle: #{$color-info-border-subtle};
-    /* Para .alert-info, sobrescribir estas variables locales */
-
-    /* Colores específicos para alerta secondary */
-    --bs-secondary-rgb: 108, 117, 125;
-    --bs-secondary-text-emphasis: #{$color-secondary-text-emphasis};
-    --bs-secondary-bg-subtle: #{$color-secondary-bg-subtle};
-    --bs-secondary-border-subtle: #{$color-secondary-border-subtle};
-    /* Para .alert-secondary, sobrescribir estas variables locales */
-
-
+    /* Variables específicas para los colores de alerta en tema oscuro */
+    --bs-primary-text-emphasis: #6ea8fe;
+    --bs-secondary-text-emphasis: #a7acb1;
+    --bs-success-text-emphasis: #75b798;
+    --bs-info-text-emphasis: #6edff6;
+    --bs-warning-text-emphasis: #ffda6a;
+    --bs-danger-text-emphasis: #ea868f;
+    --bs-light-text-emphasis: #f8f9fa;
+    --bs-dark-text-emphasis: #dee2e6;
+    --bs-primary-bg-subtle: #031633;
+    --bs-secondary-bg-subtle: #161719;
+    --bs-success-bg-subtle: #051b11;
+    --bs-info-bg-subtle: #032830;
+    --bs-warning-bg-subtle: #332701;
+    --bs-danger-bg-subtle: #2c0b0e;
+    --bs-light-bg-subtle: #343a40;
+    --bs-dark-bg-subtle: #1a1d20;
+    --bs-primary-border-subtle: #084298;
+    --bs-secondary-border-subtle: #41464b;
+    --bs-success-border-subtle: #0f5132;
+    --bs-info-border-subtle: #087990;
+    --bs-warning-border-subtle: #997404;
+    --bs-danger-border-subtle: #842029;
+    --bs-light-border-subtle: #495057;
+    --bs-dark-border-subtle: #343a40;
 }
 
 /* Estilos globales */
@@ -233,5 +247,6 @@ img {
 }
 
 .sticky-top {
-    background-color: var(--bs-dark);
+    background-color: var(--color-superficie) !important;
+    /* Usar !important si Bootstrap lo sobreescribe */
 }

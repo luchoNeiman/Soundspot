@@ -93,11 +93,12 @@ function obtenerUbicacion() {
             </div>
         </form>
 
-        <div v-if="errorGeolocalizacion" class="alert alert-warning" role="alert">
+        <div v-if="errorGeolocalizacion" class="alert alert-warning d-flex align-items-center" role="alert">
             <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ errorGeolocalizacion }}
         </div>
-        <div v-if="ubicacionUsuario && !errorGeolocalizacion" class="alert alert-info" role="status">
-            <i class="bi bi-check-circle-fill me-2"></i> Ubicación obtenida: Lat {{ ubicacionUsuario.lat.toFixed(4) }},
+        <div v-if="ubicacionUsuario && !errorGeolocalizacion" class="alert alert-info d-flex align-items-center"
+            role="status"> <i class="bi bi-check-circle-fill me-2"></i> Ubicación obtenida: Lat {{
+                ubicacionUsuario.lat.toFixed(4) }},
             Lng {{ ubicacionUsuario.lng.toFixed(4) }}.
             <em class="d-block small">(Funcionalidad de ordenar por cercanía pendiente)</em>
         </div>
@@ -108,6 +109,7 @@ function obtenerUbicacion() {
             <div v-if="conciertosFiltrados.length > 0" class="row g-4">
                 <div v-for="concierto in conciertosFiltrados" :key="concierto.id"
                     class="col-md-6 col-lg-4 d-flex align-items-stretch">
+
                     <article class="card h-100 shadow-sm d-flex flex-column">
                         <img :src="concierto.imagen" class="card-img-top" :alt="`Foto de ${concierto.artista}`">
                         <div class="card-body d-flex flex-column">
@@ -123,8 +125,8 @@ function obtenerUbicacion() {
                                 ${{ concierto.precio }}
                             </p>
                             <RouterLink :to="{ name: 'detalle-concierto', params: { id: concierto.id } }"
-                                class="btn btn-primary mt-auto">
-                                Ver Detalles <i class="bi bi-arrow-right-short" aria-hidden="true"></i>
+                                class="btn btn-primary">
+                                Ver Detalles
                             </RouterLink>
                         </div>
                     </article>
@@ -167,5 +169,13 @@ function obtenerUbicacion() {
 /* Estilo para botón de ubicación deshabilitado */
 .btn:disabled {
     cursor: wait;
+}
+
+.alert {
+    margin-top: 1.5rem;
+
+    i.bi {
+        flex-shrink: 0;
+    }
 }
 </style>
