@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
+import Inicio from '../views/Inicio.vue'
 
 // Acá creo la instancia del router
 const router = createRouter({
@@ -11,7 +11,7 @@ const router = createRouter({
     {
       path: '/', // La ruta raíz
       name: 'inicio', // Le doy un nombre a la ruta
-      component: HomeView // El componente que se debe mostrar en esta ruta
+      component: Inicio // El componente que se debe mostrar en esta ruta
     },
     {
       // Esta es una ruta dinámica. El ':id' significa que recibirá un parámetro
@@ -20,9 +20,9 @@ const router = createRouter({
       name: 'detalle-concierto',
 
       // Esto es 'lazy loading' (carga diferida).
-      // El componente ConcertDetailView.vue no se cargará hasta que
+      // El componente VistaDetalleConcierto.vue no se cargará hasta que
       // yo no visite esta ruta. Esto hace que la carga inicial de la app sea más rápida.
-      component: () => import('../views/ConcertDetailView.vue')
+      component: () => import('../views/VistaDetalleConcierto.vue')
     }
   ]
 })
