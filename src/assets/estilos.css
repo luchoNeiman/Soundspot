@@ -1,0 +1,237 @@
+/* src/assets/estilos.css */
+:root {
+    /* Paleta de Colores */
+    --color-primario: #6A11CB;
+    /* Violeta */
+    --color-secundario: #FC466B;
+    /* Rosa */
+    --color-fondo: #1A1A1A;
+    /* Gris oscuro */
+    --color-superficie: #282828;
+    /* Gris para tarjetas/elementos elevados */
+    --color-texto-principal: #E0E0E0;
+    /* Gris claro */
+    --color-texto-secundario: #B0B0B0;
+    /* Gris suave */
+    --color-exito: #1DB954;
+    /* Verde */
+    --color-borde: #444;
+    /* Borde sutil */
+    --color-error: #dc3545;
+    /* Rojo para errores */
+
+    /* Tipografía */
+    --fuente-titulos: 'Montserrat', sans-serif;
+    --fuente-parrafos: 'Poppins', sans-serif;
+    --tamano-fuente-base: 1rem;
+    /* 16px por defecto, ajustable por el usuario */
+    --linea-altura-base: 1.6;
+
+    /* Espaciados y Radios (usando rem para escalabilidad) */
+    --espaciado-base: 1rem;
+    --radio-borde: 0.5rem;
+    /* Bordes redondeados */
+
+    /* Sobrescribir variables de Bootstrap con nuestras definiciones */
+    --bs-body-bg: var(--color-fondo);
+    --bs-body-color: var(--color-texto-principal);
+    --bs-link-color: var(--color-secundario);
+    --bs-link-hover-color: color-mix(in srgb, var(--color-secundario) 80%, white);
+    /* Más claro al hover */
+    --bs-border-color: var(--color-borde);
+    --bs-secondary-color: var(--color-texto-secundario);
+    --bs-emphasis-color: var(--color-texto-principal);
+    --bs-border-radius: var(--radio-borde);
+
+    /* Botones Primarios */
+    --bs-primary: var(--color-primario);
+    --bs-primary-rgb: 106, 17, 203;
+    --bs-btn-padding-y: 0.5rem;
+    --bs-btn-padding-x: 1.25rem;
+    --bs-btn-font-family: var(--fuente-parrafos);
+    --bs-btn-font-weight: 500;
+    --bs-btn-bg: var(--color-primario);
+    --bs-btn-border-color: var(--color-primario);
+    --bs-btn-hover-bg: color-mix(in srgb, var(--color-primario) 85%, black);
+    /* Más oscuro al hover */
+    --bs-btn-hover-border-color: color-mix(in srgb, var(--color-primario) 85%, black);
+    /* Más oscuro al hover */
+    --bs-btn-active-bg: color-mix(in srgb, var(--color-primario) 75%, black);
+    /* Más oscuro al estar activo */
+    --bs-btn-active-border-color: color-mix(in srgb, var(--color-primario) 75%, black);
+    /* Más oscuro al estar activo */
+    --bs-btn-focus-shadow-rgb: var(--bs-primary-rgb);
+    /* Botón Outline Primary */
+    --bs-btn-focus-box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.5);
+    /* Sombra de foco más visible */
+    --bs-btn-disabled-opacity: 0.5;
+
+    /* Cards */
+    --bs-card-bg: var(--color-superficie);
+    --bs-card-border-color: var(--color-borde);
+    --bs-card-color: var(--color-texto-principal);
+    --bs-card-cap-bg: rgba(0, 0, 0, 0.1);
+    /* Encabezado/pie ligeramente diferente */
+    --bs-card-spacer-y: calc(var(--espaciado-base) * 1.25);
+    --bs-card-spacer-x: calc(var(--espaciado-base) * 1.25);
+
+    /* Formularios */
+    --bs-body-bg-rgb: 26, 26, 26;
+    --bs-tertiary-bg-rgb: 68, 68, 68;
+    --bs-form-control-bg: #333;
+    --bs-form-control-color: var(--color-texto-principal);
+    --bs-form-control-border-color: var(--color-borde);
+    --bs-form-label-color: var(--color-texto-secundario);
+    /* Color para labels */
+    --bs-form-select-bg-img: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23e0e0e0' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+    /* Flecha personalizada */
+    --bs-input-focus-border-color: color-mix(in srgb, var(--color-primario) 70%, white);
+    /* Más claro al foco */
+    --bs-input-focus-box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.35);
+
+    /* Header */
+    --bs-dark-rgb: 40, 40, 40;
+    /* Usar --color-superficie para el header */
+    --bs-navbar-padding-y: calc(var(--espaciado-base) * 0.75);
+    --bs-navbar-brand-font-size: 1.5rem;
+    /* Ajuste tamaño nombre app */
+
+    /* Alertas */
+    --bs-alert-bg: transparent;
+    /* Fondo transparente por defecto */
+    --bs-alert-border-width: 1px;
+    /* Colores específicos para alertas (ejemplo warning) */
+    --bs-warning-rgb: 255, 193, 7;
+    --bs-warning-text-emphasis: #{$color-warning-text-emphasis};
+    --bs-warning-bg-subtle: #{$color-warning-bg-subtle};
+    --bs-warning-border-subtle: #{$color-warning-border-subtle};
+    --bs-alert-color: var(--bs-warning-text-emphasis);
+    --bs-alert-bg: var(--bs-warning-bg-subtle);
+    --bs-alert-border-color: var(--bs-warning-border-subtle);
+
+    /* Colores específicos para alerta info */
+    --bs-info-rgb: 13, 202, 240;
+    --bs-info-text-emphasis: #{$color-info-text-emphasis};
+    --bs-info-bg-subtle: #{$color-info-bg-subtle};
+    --bs-info-border-subtle: #{$color-info-border-subtle};
+    /* Para .alert-info, sobrescribir estas variables locales */
+
+    /* Colores específicos para alerta secondary */
+    --bs-secondary-rgb: 108, 117, 125;
+    --bs-secondary-text-emphasis: #{$color-secondary-text-emphasis};
+    --bs-secondary-bg-subtle: #{$color-secondary-bg-subtle};
+    --bs-secondary-border-subtle: #{$color-secondary-border-subtle};
+    /* Para .alert-secondary, sobrescribir estas variables locales */
+
+
+}
+
+/* Estilos globales */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    font-size: 100%;
+    /* Establece la base para rem (16px) */
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: var(--fuente-parrafos);
+    font-size: var(--tamano-fuente-base);
+    line-height: var(--linea-altura-base);
+    color: var(--bs-body-color);
+    background-color: var(--bs-body-bg);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Títulos */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: var(--fuente-titulos);
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--bs-emphasis-color);
+    /* Usar el color de énfasis de Bootstrap */
+    margin-top: 0;
+    margin-bottom: calc(var(--espaciado-base) * 0.75);
+    /* Espaciado inferior relativo */
+}
+
+h1 {
+    font-size: 2.25rem;
+}
+
+/* ~36px */
+h2 {
+    font-size: 1.875rem;
+}
+
+/* ~30px */
+h3 {
+    font-size: 1.5rem;
+}
+
+/* ~24px */
+/* otros tamaños si es necesario */
+
+p {
+    margin-bottom: var(--espaciado-base);
+    /* Margen inferior relativo para párrafos */
+}
+
+a {
+    color: var(--bs-link-color);
+    text-decoration: none;
+    transition: color 0.15s ease-in-out;
+}
+
+a:hover {
+    color: var(--bs-link-hover-color);
+    text-decoration: underline;
+}
+
+/*accesibilidad */
+img {
+    max-width: 100%;
+    /* Asegurar que las imágenes no se desborden */
+    height: auto;
+    display: block;
+}
+
+/* Efecto hover para cards */
+.card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-0.25rem);
+    /* Levantarla un poco */
+    box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.45) !important;
+}
+
+/* Ajustes específicos de Bootstrap*/
+.form-label {
+    font-weight: 500;
+    margin-bottom: 0.35rem;
+}
+
+.form-control::placeholder {
+    color: var(--color-texto-secundario);
+    opacity: 0.7;
+}
+
+.sticky-top {
+    background-color: var(--bs-dark);
+}
