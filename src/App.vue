@@ -19,6 +19,5 @@ import Header from '@/components/Header.vue';
 <style scoped>
 main {
   min-height: calc(100vh - 200px);
-  /* Ejemplo para empujar el footer hacia abajo */
 }
 </style>
