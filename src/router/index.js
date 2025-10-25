@@ -23,6 +23,11 @@ const router = createRouter({
       // El componente VistaDetalleConcierto.vue no se cargará hasta que
       // yo no visite esta ruta. Esto hace que la carga inicial de la app sea más rápida.
       component: () => import('../views/VistaDetalleConcierto.vue')
+    },
+    {
+      path: '/mis-eventos',
+      name: 'mis-eventos',
+      component: () => import('../views/VistaMisEventos.vue')
     }
   ]
 })

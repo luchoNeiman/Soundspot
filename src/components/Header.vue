@@ -1,3 +1,8 @@
+<script setup>
+import { RouterLink } from 'vue-router'
+import { useConciertosStore } from '@/stores/conciertos.js'
+</script>
+
 <template>
     <header class="navbar navbar-expand-lg navbar-dark shadow-sm py-lg-0 sticky-top">
         <div class="container">
@@ -17,15 +22,20 @@
                             <i class="bi bi-house-door-fill me-1 d-lg-none" aria-hidden="true"></i> Inicio
                         </RouterLink>
                     </li>
+                    <li class="nav-item">
+                        <RouterLink class="nav-link px-lg-3 py-lg-4" active-class="active"
+                            :to="{ name: 'mis-eventos' }">
+                            <i class="bi bi-calendar-check-fill me-1 d-lg-none" aria-hidden="true"></i> Mis Eventos
+                            <span v-if="useConciertosStore.conteoAsistire > 0"
+                                class="badge rounded-pill text-bg-secondary ms-1">{{ useConciertosStore.conteoAsistire
+                                }}</span>
+                        </RouterLink>
+                    </li>
                 </ul>
             </nav>
         </div>
     </header>
 </template>
-
-<script setup>
-import { RouterLink } from 'vue-router'
-</script>
 
 <style scoped>
 .navbar {
