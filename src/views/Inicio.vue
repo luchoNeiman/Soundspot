@@ -1,14 +1,14 @@
 <script setup>
 import { ref, computed } from 'vue'
-import { RouterLink } from 'vue-router'
 import { useConciertosStore } from '@/stores/conciertos.js'
-// import CardConcierto from '@/components/CardConcierto.vue' // Lo importaremos cuando exista
+import CardConcierto from '@/components/CardConcierto.vue'
+import FiltrosBusqueda from '@/components/FiltrosBusqueda.vue'
 
 const storeConciertos = useConciertosStore()
-const conciertos = computed(() => storeConciertos.conciertos)
 const filtroCiudad = ref('')
 const filtroFecha = ref('')
 
+const conciertos = computed(() => storeConciertos.conciertos)
 const conciertosFiltrados = computed(() => {
     let resultado = conciertos.value;
     const ciudadLower = filtroCiudad.value.toLowerCase().trim();
@@ -43,8 +43,8 @@ function obtenerUbicacion() {
     navigator.geolocation.getCurrentPosition(
         (posicion) => {
             ubicacionUsuario.value = {
-                lat: posicion.coords.latitude,
-                lng: posicion.coords.longitude
+                lat: posicion.coords.latitude,  // Latitud
+                lng: posicion.coords.longitude  // Longitud
             }
             console.log('Ubicación obtenida:', ubicacionUsuario.value)
             // TODO: Llamar a función para ordenar conciertos por distancia
@@ -72,35 +72,22 @@ function obtenerUbicacion() {
     <section class="vista-inicio mb-5">
         <h1 class="mb-4">Próximos Conciertos</h1>
 
-        <form @submit.prevent class="row g-3 mb-4 align-items-end" role="search">
-            <div class="col-md-4">
-                <label for="filtroCiudad" class="form-label">Ciudad:</label>
-                <input type="search" id="filtroCiudad" class="form-control" v-model="filtroCiudad"
-                    placeholder="Buscar por ciudad..." aria-label="Filtrar conciertos por ciudad" />
-            </div>
-            <div class="col-md-4">
-                <label for="filtroFecha" class="form-label">Fecha:</label>
-                <input type="date" id="filtroFecha" class="form-control" v-model="filtroFecha"
-                    aria-label="Filtrar conciertos por fecha" />
-            </div>
-            <div class="col-md-4">
-                <button @click="obtenerUbicacion" class="btn btn-outline-light w-100" :disabled="buscandoUbicacion">
-                    <span v-if="buscandoUbicacion" class="spinner-border spinner-border-sm me-1" role="status"
-                        aria-hidden="true"></span>
-                    <i v-else class="bi bi-geo-alt me-1"></i>
-                    {{ buscandoUbicacion ? 'Buscando...' : 'Usar mi ubicación' }}
-                </button>
-            </div>
-        </form>
+        <FiltrosBusqueda v-model:ciudad="filtroCiudad" v-model:fecha="filtroFecha"
+            :buscando-ubicacion="buscandoUbicacion" @buscar-ubicacion="obtenerUbicacion" />
 
         <div v-if="errorGeolocalizacion" class="alert alert-warning d-flex align-items-center" role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ errorGeolocalizacion }}
+            <i class="bi bi-exclamation-triangle-fill me-2 flex-shrink-0"></i>
+            <div>{{ errorGeolocalizacion }}</div>
         </div>
+
         <div v-if="ubicacionUsuario && !errorGeolocalizacion" class="alert alert-info d-flex align-items-center"
-            role="status"> <i class="bi bi-check-circle-fill me-2"></i> Ubicación obtenida: Lat {{
-                ubicacionUsuario.lat.toFixed(4) }},
-            Lng {{ ubicacionUsuario.lng.toFixed(4) }}.
-            <em class="d-block small">(Funcionalidad de ordenar por cercanía pendiente)</em>
+            role="status">
+            <i class="bi bi-check-circle-fill me-2 flex-shrink-0"></i>
+            <div>
+                Ubicación obtenida: Lat {{ ubicacionUsuario.lat.toFixed(4) }}, Lng {{ ubicacionUsuario.lng.toFixed(4)
+                }}.
+                <em class="d-block small">(Funcionalidad de ordenar por cercanía pendiente)</em>
+            </div>
         </div>
 
         <section aria-labelledby="resultados-titulo">
@@ -110,26 +97,7 @@ function obtenerUbicacion() {
                 <div v-for="concierto in conciertosFiltrados" :key="concierto.id"
                     class="col-md-6 col-lg-4 d-flex align-items-stretch">
 
-                    <article class="card h-100 shadow-sm d-flex flex-column">
-                        <img :src="concierto.imagen" class="card-img-top" :alt="`Foto de ${concierto.artista}`">
-                        <div class="card-body d-flex flex-column">
-                            <h3 class="card-title h5 mb-2">{{ concierto.artista }}</h3>
-                            <p class="card-text text-body-secondary small mb-1">
-                                <i class="bi bi-geo-alt-fill me-1" aria-hidden="true"></i> {{ concierto.lugar }}, {{
-                                    concierto.ciudad }}
-                            </p>
-                            <p class="card-text text-body-secondary small mb-3">
-                                <i class="bi bi-calendar-event me-1" aria-hidden="true"></i> {{ concierto.fecha }}
-                            </p>
-                            <p class="card-text fs-5 fw-semibold text-end mt-auto mb-3">
-                                ${{ concierto.precio }}
-                            </p>
-                            <RouterLink :to="{ name: 'detalle-concierto', params: { id: concierto.id } }"
-                                class="btn btn-primary">
-                                Ver Detalles
-                            </RouterLink>
-                        </div>
-                    </article>
+                    <CardConcierto :concierto="concierto" />
                 </div>
             </div>
 
@@ -146,25 +114,6 @@ function obtenerUbicacion() {
     padding-top: 1rem;
 }
 
-/* Ajustes  para la imagen de la tarjeta */
-.card-img-top {
-    height: 12.5rem;
-    object-fit: cover;
-    border-bottom: 1px solid var(--color-borde);
-}
-
-.card-title {
-    font-family: var(--fuente-titulos);
-}
-
-.card-body {
-    font-family: var(--fuente-parrafos);
-}
-
-.card-text.small {
-    font-size: 0.875rem;
-    /* ~14px */
-}
 
 /* Estilo para botón de ubicación deshabilitado */
 .btn:disabled {
@@ -177,5 +126,7 @@ function obtenerUbicacion() {
     i.bi {
         flex-shrink: 0;
     }
+
+    /* Asegurar que el icono no se encoja */
 }
 </style>

@@ -2,7 +2,7 @@
     <header class="navbar navbar-expand-lg navbar-dark shadow-sm py-lg-0 sticky-top">
         <div class="container">
             <RouterLink class="navbar-brand d-flex align-items-center py-3" :to="{ name: 'inicio' }">
-                <i class="bi bi-music-note-beamed fs-2 me-2" aria-hidden="true"></i>
+                <i class="bi bi-music-note-beamed fs-2 me-2 brand-gradient" aria-hidden="true"></i>
                 <span class="fs-4 fw-bold brand-gradient">SoundSpot</span>
             </RouterLink>
 
@@ -36,14 +36,12 @@ import { RouterLink } from 'vue-router'
 .brand-gradient {
     background: linear-gradient(45deg, var(--color-primario), var(--color-secundario), color-mix(in srgb, var(--color-primario) 50%, var(--color-secundario) 50%));
     background-size: 200% auto;
-    /* Tamaño del gradiente para animación */
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
     animation: gradient-animation 4s ease infinite;
 }
 
-/* Definición de la animación */
 @keyframes gradient-animation {
     0% {
         background-position: 0% 50%;

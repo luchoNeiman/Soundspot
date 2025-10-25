@@ -7,17 +7,39 @@ import Header from '@/components/Header.vue';
 <template>
   <Header />
 
-  <main class="container mt-4">
+  <main class="container mt-4 mb-5">
     <RouterView />
   </main>
 
-  <footer class="text-center text-muted py-3 mt-5">
-    <p>&copy; {{ new Date().getFullYear() }} SoundSpot - Creado por Luciano Neiman</p>
+  <footer class="pie-pagina text-center py-4 mt-auto">
+    <div class="container">
+      <p class="mb-0 small text-body-secondary"> &copy; {{ new Date().getFullYear() }} SoundSpot - Creado por Luciano
+        Neiman
+      </p>
+    </div>
   </footer>
 </template>
 
 <style scoped>
 main {
   min-height: calc(100vh - 200px);
+  /* Hace que main ocupe el espacio disponible */
+  flex-grow: 1;
+}
+
+/* Asegurar que App ocupe al menos toda la altura de la ventana para que mt-auto en el footer funcione bien */
+#app {
+  /* Asumiendo que el id raíz es #app en index.html */
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.pie-pagina {
+  background-color: var(--color-superficie);
+  /* Fondo oscuro como las cards */
+  border-top: 1px solid var(--color-borde);
+  /* Línea divisoria sutil */
+  font-family: var(--fuente-parrafos);
 }
 </style>
