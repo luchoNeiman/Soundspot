@@ -2,11 +2,11 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 // useRoute para leer parámetros de la URL, useRouter para navegar
 import { useRoute, useRouter } from 'vue-router'
-// Importamos el store para buscar el concierto y manejar asistencia
+// Importo el store para buscar el concierto y manejar asistencia
 import { useConciertosStore } from '@/stores/conciertos.js'
-// Importamos Leaflet
+// Importo Leaflet para el mapa
 import L from 'leaflet'
-// Importamos los estilos de Leaflet
+// Importo los estilos de Leaflet
 import 'leaflet/dist/leaflet.css'
 
 // Obtenemos acceso a la ruta actual y al router
@@ -104,9 +104,9 @@ function volverAtras() {
                 <section class="info-adicional">
                     <h2 class="h4 mb-3">Detalles del Evento</h2>
                     <p><i class="bi bi-calendar-event me-2 icono-detalle"></i> Fecha: <strong>{{ concierto.fecha
-                    }}</strong></p>
+                            }}</strong></p>
                     <p><i class="bi bi-cash-coin me-2 icono-detalle"></i> Precio: <strong>${{ concierto.precio
-                    }}</strong></p>
+                            }}</strong></p>
                     <!-- Podrías añadir más detalles aquí si la API los proveyera -->
                 </section>
             </div>
