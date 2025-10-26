@@ -32,7 +32,7 @@ function solicitarUbicacion() {
             <input type="search" id="filtroCiudad" class="form-control border-light " v-model="ciudad"
                 placeholder="Buscar por ciudad..." aria-label="Filtrar conciertos por ciudad" />
         </div>
-        <div class="col-md-4">
+        <div class="col-md-4 text-white">
             <label for="filtroFecha" class="form-label">Fecha:</label>
             <!-- Uso v-model directamente con la variable definida por defineModel -->
             <input type="date" id="filtroFecha" class="form-control border-light" v-model="fecha"

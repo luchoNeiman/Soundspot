@@ -213,7 +213,6 @@ a {
 
 a:hover {
     color: var(--bs-link-hover-color);
-    text-decoration: underline;
 }
 
 /*accesibilidad */
@@ -230,7 +229,7 @@ img {
 }
 
 .card:hover {
-    transform: translateY(-0.25rem);
+    transform: translateY(-0.08rem);
     /* Levantarla un poco */
     box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.45) !important;
 }

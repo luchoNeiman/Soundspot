@@ -47,7 +47,7 @@ function manejarAsistencia() {
                 <div class="d-grid gap-2 d-sm-flex justify-content-sm-between align-items-center">
                     <RouterLink :to="{ name: 'detalle-concierto', params: { id: props.concierto.id } }"
                         class="btn btn-outline-light btn-sm flex-grow-1 flex-sm-grow-0">
-                        Ver Detalles <i class="bi bi-arrow-right-short" aria-hidden="true"></i>
+                        Ver Detalles
                     </RouterLink>
                     <button @click="manejarAsistencia"
                         :class="['btn btn-sm flex-grow-1 flex-sm-grow-0', asistiendo ? 'btn-success' : 'btn-outline-success']">
@@ -64,15 +64,10 @@ function manejarAsistencia() {
 <style scoped>
 .card-wrapper {
     position: relative;
-    /* Necesario para el posicionamiento absoluto del borde */
     padding: 3px;
-    /* Espacio para que se vea el borde del pseudo-elemento */
     border-radius: calc(var(--radio-borde) + 3px);
-    /* Radio exterior */
     overflow: hidden;
-    /* Ocultar partes del gradiente que sobresalgan */
     z-index: 1;
-    /* Asegurar que esté por encima de elementos normales */
 }
 
 /* Pseudo-elemento para el borde animado */
@@ -84,34 +79,21 @@ function manejarAsistencia() {
     bottom: 0;
     left: 0;
     z-index: -1;
-    /* Detrás de la tarjeta real */
     margin: -3px;
-    /* Expandir para cubrir el padding del wrapper */
     border-radius: inherit;
-    /* Heredar el radio del wrapper */
-    /* El gradiente, igual al del logo */
     background: linear-gradient(45deg, var(--color-primario), var(--color-secundario), var(--color-primario));
     background-size: 400% 400%;
-    /* Tamaño más grande para la animación */
     animation: borde-animado 5s linear infinite;
-    /* Aplicar animación */
     transition: opacity 0.3s;
-    /* Transición suave por si queremos ocultarlo */
 }
 
 /* La tarjeta real dentro del wrapper */
 .tarjeta-concierto.card-con-borde-animado {
-    /* Ya tiene h-100 y estilos de card */
-    /* Aseguramos que el fondo de la tarjeta tape el centro del gradiente */
     background-color: var(--bs-card-bg);
-    /* El radio interno debe coincidir con el original */
     border-radius: var(--radio-borde);
-    /* Quitamos el borde default de Bootstrap si existe, el wrapper lo simula */
     border: none;
     position: relative;
-    /* Para asegurar apilamiento correcto */
     z-index: 1;
-    /* Encima del pseudo-elemento */
 }
 
 /* Animación del borde */
@@ -130,11 +112,9 @@ function manejarAsistencia() {
 }
 
 
-/* ... (resto de estilos: .imagen-concierto, .titulo-artista, etc. como antes) ... */
 .imagen-concierto {
     height: 12.5rem;
     object-fit: cover;
-    /* Radio solo arriba, ya que la tarjeta interna lo tiene */
     border-top-left-radius: var(--radio-borde);
     border-top-right-radius: var(--radio-borde);
     border-bottom-left-radius: 0;
