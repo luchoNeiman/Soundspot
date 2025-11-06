@@ -1,10 +1,11 @@
 <script setup>
-import { ref } from 'vue'
+import { computed } from 'vue'
 
 // Defino los 'modelos' que este componente manejará.
 // 'defineModel' crea una prop reactiva y emite 'update:nombreModelo' automáticamente cuando el valor cambia internamente (gracias a v-model en los inputs).
 const ciudad = defineModel('ciudad') // Vinculado a v-model:ciudad en el padre
-const fecha = defineModel('fecha')   // Vinculado a v-model:fecha en el padre
+const mes = defineModel('mes')   // Vinculado a v-model:mes
+const anio = defineModel('anio')  // Vinculado a v-model:fecha en el padre
 
 // Defino una prop normal para saber si se está buscando la ubicación
 const props = defineProps({
@@ -22,26 +23,58 @@ const emit = defineEmits(['buscarUbicacion'])
 function solicitarUbicacion() {
     emit('buscarUbicacion')
 }
+
+// Listas para los Dropdowns 
+const meses = computed(() => [
+    { valor: 0, nombre: 'Todos los Meses' },
+    { valor: 1, nombre: 'Enero' },
+    { valor: 2, nombre: 'Febrero' },
+    { valor: 3, nombre: 'Marzo' },
+    { valor: 4, nombre: 'Abril' },
+    { valor: 5, nombre: 'Mayo' },
+    { valor: 6, nombre: 'Junio' },
+    { valor: 7, nombre: 'Julio' },
+    { valor: 8, nombre: 'Agosto' },
+    { valor: 9, nombre: 'Septiembre' },
+    { valor: 10, nombre: 'Octubre' },
+    { valor: 11, nombre: 'Noviembre' },
+    { valor: 12, nombre: 'Diciembre' }
+])
+
+// Creamos una lista de años (puedes hacerla más dinámica si quieres)
+const anios = computed(() => [
+    { valor: 0, nombre: 'Todos los Años' },
+    { valor: 2025, nombre: '2025' },
+    { valor: 2026, nombre: '2026' }
+])
 </script>
 
 <template>
     <form @submit.prevent class="row g-3 mb-4 align-items-end" role="search">
-        <div class="col-md-4">
+        <div class="col-md-4 col-sm-12">
             <label for="filtroCiudad" class="form-label">Ciudad:</label>
             <!-- Uso v-model directamente con la variable definida por defineModel -->
             <input type="search" id="filtroCiudad" class="form-control border-light " v-model="ciudad"
                 placeholder="Buscar por ciudad..." aria-label="Filtrar conciertos por ciudad" />
         </div>
-        <div class="col-md-4 text-white">
-            <label for="filtroFecha" class="form-label">Fecha:</label>
-            <!-- Uso v-model directamente con la variable definida por defineModel -->
-            <input type="date" id="filtroFecha" class="form-control border-light" v-model="fecha"
-                aria-label="Filtrar conciertos por fecha" />
+
+        <div class="col-md-3 col-sm-6 text-white">
+            <label for="filtroMes" class="form-label">Mes:</label>
+            <select id="filtroMes" class="form-select" v-model.number="mes" aria-label="Filtrar por mes">
+                <option v-for="m in meses" :key="m.valor" :value="m.valor">{{ m.nombre }}</option>
+            </select>
         </div>
-        <div class="col-md-4">
-            <!-- Llamo a solicitarUbicacion al hacer clic -->
-            <!-- Uso la prop 'buscandoUbicacion' para deshabilitar -->
-            <button @click="solicitarUbicacion" class="btn btn-outline-light w-100" :disabled="props.buscandoUbicacion">
+
+        <div class="col-md-2 col-sm-6">
+            <label for="filtroAnio" class="form-label">Año:</label>
+            <select id="filtroAnio" class="form-select" v-model.number="anio" aria-label="Filtrar por año">
+                <option v-for="a in anios" :key="a.valor" :value="a.valor">{{ a.nombre }}</option>
+            </select>
+        </div>
+
+        <div class="col-md-3 col-sm-12">
+            <label class="form-label d-none d-md-block">&nbsp;</label> <button @click="solicitarUbicacion"
+                class="btn btn-outline-light w-100" :disabled="props.buscandoUbicacion">
                 <span v-if="props.buscandoUbicacion" class="spinner-border spinner-border-sm me-1" role="status"
                     aria-hidden="true"></span>
                 <i v-else class="bi bi-geo-alt me-1"></i>
@@ -52,6 +85,13 @@ function solicitarUbicacion() {
 </template>
 
 <style scoped>
+.form-select {
+    /* Tus estilos de estilos.css ya deberían cubrir esto, pero por si acaso */
+    background-color: var(--bs-form-control-bg);
+    color: var(--bs-form-control-color);
+    border-color: var(--bs-form-control-border-color);
+}
+
 .btn:disabled {
     cursor: wait;
 }

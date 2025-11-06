@@ -27,9 +27,7 @@ main {
   flex-grow: 1;
 }
 
-/* Asegurar que App ocupe al menos toda la altura de la ventana para que mt-auto en el footer funcione bien */
 #app {
-  /* Asumiendo que el id raíz es #app en index.html */
   display: flex;
   flex-direction: column;
   min-height: 100vh;
