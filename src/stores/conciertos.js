@@ -4,15 +4,17 @@ import { ref, computed } from 'vue'
 // API Key de Ticketmaster
 const API_KEY = '5TjrtE9vOIGvZPpAZFvhODr9pyZcivHD'
 // URL de la API de Ticketmaster para eventos de música en Argentina
-const API_URL = `https://app.ticketmaster.com/discovery/v2/events.json?classificationName=Music&countryCode=AR&apikey=${API_KEY}`
+const API_URL = `https://app.ticketmaster.com/discovery/v2/events.json?apikey=${API_KEY}`
 
-// Función para transformar los datos de la API a nuestro formato
+// Función para transformar los datos de la API a mi formato
 function transformarDatosApi(evento) {
-  // Buscamos la imagen con la mejor calidad (ratio 16_9 y tamaño mediano)
+  // imagen con la mejor calidad (ratio 16_9 y tamaño mediano)
   const imagen = evento.images.find(img => img.ratio === '16_9' && img.width > 400)?.url || evento.images[0].url
 
   // Obtenemos los datos de ubicación
   const venue = evento._embedded?.venues?.[0];
+
+  const precioMin = evento.priceRanges?.[0]?.min || 0
 
   return {
     id: evento.id,
@@ -20,15 +22,14 @@ function transformarDatosApi(evento) {
     lugar: venue?.name || 'Lugar a confirmar',
     ciudad: venue?.city?.name || 'Ciudad no disponible',
     fecha: evento.dates?.start?.localDate || 'Fecha a confirmar',
-    precio: evento.priceRanges?.[0]?.min || 0, // Precio mínimo (o 0 si no está)
+    precio: precioMin, // Precio mínimo (o 0 si no está)
     imagen: imagen,
-    lat: parseFloat(venue?.location?.latitude) || -34.60, // Latitud (default a Bs As si no hay)
-    lng: parseFloat(venue?.location?.longitude) || -58.38 // Longitud (default a Bs As si no hay)
+    lat: parseFloat(venue?.location?.latitude) || null, // Latitud (default a Bs As si no hay)
+    lng: parseFloat(venue?.location?.longitude) || null // Longitud (default a Bs As si no hay)
   }
 }
 
 // Defino mi store de Pinia llamado 'conciertos'.
-// Uso la sintaxis de 'setup function' (la función flecha) 
 export const useConciertosStore = defineStore('conciertos', () => {
 
   // STATE 
@@ -51,17 +52,24 @@ export const useConciertosStore = defineStore('conciertos', () => {
     estaCargando.value = true
     errorApi.value = null
 
+    console.log("Buscando conciertos en Ticketmaster...");
+
     try {
       const respuesta = await fetch(API_URL)
+      console.log("probando para ver si entra");
+
       if (!respuesta.ok) {
-        throw new Error('No se pudo conectar con la API de Ticketmaster.')
+        throw new Error(`Error ${respuesta.status}: No se pudo conectar con la API.`)
       }
       const data = await respuesta.json()
-
+      console.log(data);
       // Ticketmaster devuelve los eventos en data._embedded.events
       if (data._embedded && data._embedded.events) {
-        // Transformamos los datos de la API a nuestro formato
-        conciertos.value = data._embedded.events.map(transformarDatosApi)
+        // Transformo los datos de la API a nuestro formato
+        conciertos.value = data._embedded.events
+          .map(transformarDatosApi)
+          .filter(c => c.lat && c.lng); // Filtro solo los que tienen latitud y longitud
+        console.log("Conciertos cargados:", conciertos.value);
       } else {
         conciertos.value = [] // No se encontraron eventos
       }
@@ -70,7 +78,7 @@ export const useConciertosStore = defineStore('conciertos', () => {
       console.error("Error al buscar conciertos:", error)
       errorApi.value = error.message
     } finally {
-      estaCargando.value = false // Dejamos de cargar, sea éxito o error
+      estaCargando.value = false // Dejo de cargar, sea éxito o error
     }
   }
 
@@ -100,7 +108,7 @@ export const useConciertosStore = defineStore('conciertos', () => {
     errorApi,
     eventosUsuario,
     conteoAsistire,
-    buscarConciertos, // Exponemos la nueva función
+    buscarConciertos,
     alternarAsistencia,
     vaAAsistir
   }

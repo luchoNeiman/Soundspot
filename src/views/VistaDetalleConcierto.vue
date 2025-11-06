@@ -104,9 +104,9 @@ function volverAtras() {
                 <section class="info-adicional">
                     <h2 class="h4 mb-3">Detalles del Evento</h2>
                     <p><i class="bi bi-calendar-event me-2 icono-detalle"></i> Fecha: <strong>{{ concierto.fecha
-                            }}</strong></p>
+                    }}</strong></p>
                     <p><i class="bi bi-cash-coin me-2 icono-detalle"></i> Precio: <strong>${{ concierto.precio
-                            }}</strong></p>
+                    }}</strong></p>
                     <!-- Podrías añadir más detalles aquí si la API los proveyera -->
                 </section>
             </div>

@@ -15,6 +15,8 @@ const ubicacionUsuario = ref(null)
 const errorGeolocalizacion = ref(null)
 const buscandoUbicacion = ref(false)
 
+const conciertos = computed(() => storeConciertos.conciertos)  //ver que hago con esto
+
 // Lógica de Conciertos (API)
 // Uso onMounted para llamar a la API solo una vez, cuando el componente se carga
 onMounted(() => {
@@ -25,7 +27,7 @@ onMounted(() => {
 const estaCargando = computed(() => storeConciertos.estaCargando)
 const errorApi = computed(() => storeConciertos.errorApi)
 
-/**
+/*
  * Calcula la distancia entre dos puntos (Lat/Lng) usando la fórmula de Haversine.
  * Devuelve la distancia en kilómetros.
  */
@@ -41,12 +43,12 @@ function getDistanciaHaversine(lat1, lon1, lat2, lon2) {
     return R * c; // Distancia en km
 }
 
-const conciertos = computed(() => storeConciertos.conciertos)  //ver que hago con esto
+
 
 const conciertosFiltrados = computed(() => {
-    let resultado = conciertos.value;
+    let resultado = storeConciertos.conciertos;
 
-    // 1. Filtrar por Ciudad
+    // Filtrar por Ciudad
     const ciudadLower = filtroCiudad.value.toLowerCase().trim();
     if (ciudadLower) {
         resultado = resultado.filter(c =>
@@ -54,12 +56,12 @@ const conciertosFiltrados = computed(() => {
         );
     }
 
-    // 2. Filtrar por Año
+    // Filtrar por Año
     if (filtroAnio.value > 0) {
         resultado = resultado.filter(c => new Date(c.fecha).getFullYear() === filtroAnio.value);
     }
 
-    // 3. Filtrar por Mes
+    // Filtrar por Mes
     if (filtroMes.value > 0) {
         resultado = resultado.filter(c => (new Date(c.fecha).getUTCMonth() + 1) === filtroMes.value);
     }
@@ -110,9 +112,7 @@ function obtenerUbicacion() {
             console.log('Ubicación obtenida:', ubicacionUsuario.value)
             // TODO: Llamar a función para ordenar conciertos por distancia
             buscandoUbicacion.value = false
-            setTimeout(() => {
-                ubicacionUsuario.value = null;
-            }, 5000);
+
         },
         (error) => {
             console.error("Error obteniendo ubicación:", error)
