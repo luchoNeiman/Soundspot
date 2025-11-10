@@ -13,10 +13,26 @@ import 'leaflet/dist/leaflet.css'
 const route = useRoute()
 const router = useRouter()
 const storeConciertos = useConciertosStore()
+const cargandoDatos = ref(true)
 
 // Obtenemos el ID del concierto desde la URL (Ticketmaster usa IDs como string)
 // No convertimos a número porque los IDs de la API son cadenas (alfanuméricas).
 const conciertoId = computed(() => String(route.params.id))
+
+// Función para cargar los datos necesarios
+async function cargarDatos() {
+    cargandoDatos.value = true
+    try {
+        // Si no hay conciertos cargados, los cargamos
+        if (storeConciertos.conciertos.length === 0) {
+            await storeConciertos.buscarConciertos()
+        }
+    } catch (error) {
+        console.error('Error cargando datos:', error)
+    } finally {
+        cargandoDatos.value = false
+    }
+}
 
 // Buscamos el concierto en el store usando el ID de la ruta
 // Usamos computed para que se recalcule si el store cambia (aunque aquí no debería)
@@ -69,8 +85,11 @@ function destruirMapa() {
 }
 
 // Inicializo el mapa cuando el componente se monta y tengo el concierto
-onMounted(() => {
-    // Espero a que 'concierto' tenga valor (si carga asíncrono en el futuro)
+onMounted(async () => {
+    // Primero cargamos los datos si es necesario
+    await cargarDatos()
+    
+    // Espero a que 'concierto' tenga valor
     watch(concierto, (nuevoConcierto) => {
         if (nuevoConcierto) {
             // Pequeña demora para asegurar que el DOM esté listo
@@ -152,6 +171,14 @@ function volverAtras() {
             </div>
         </div>
     </article>
+
+    <!-- Estado de carga -->
+    <div v-else-if="cargandoDatos" class="text-center my-5">
+        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+            <span class="visually-hidden">Cargando...</span>
+        </div>
+        <p class="mt-3 text-body-secondary">Cargando detalles del evento...</p>
+    </div>
 
     <!-- Mensaje si el concierto no se encuentra -->
     <div v-else class="alert alert-danger text-center" role="alert">

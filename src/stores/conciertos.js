@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 
 // API Key de Ticketmaster
 const API_KEY = '5TjrtE9vOIGvZPpAZFvhODr9pyZcivHD'
@@ -47,13 +47,24 @@ function transformarDatosApi(evento) {
 // Defino mi store de Pinia llamado 'conciertos'.
 export const useConciertosStore = defineStore('conciertos', () => {
 
+  // Clave para localStorage
+  const STORAGE_KEY = 'soundspot-eventos-usuario'
+
   // STATE 
   const conciertos = ref([])
   const estaCargando = ref(false) // Estado para saber si estamos cargando datos
   const errorApi = ref(null) // Para guardar errores de la API
 
   // Creo un array reactivo para guardar únicamente los IDs de los conciertos a los que el usuario marque como "Asistiré" o "Interesado".
-  const eventosUsuario = ref([])
+  // Inicializo con datos del localStorage si existen
+  const eventosUsuario = ref(
+    JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
+  )
+
+  // Watch para guardar cambios en localStorage
+  watch(eventosUsuario, (nuevosEventos) => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(nuevosEventos))
+  }, { deep: true })
 
   // GETTERS 
   // Creo una propiedad computada que me dice la cantidad de eventos a los que voy a asistir. Simplemente cuenta los elementos en 'eventosUsuario'.
@@ -68,7 +79,7 @@ export const useConciertosStore = defineStore('conciertos', () => {
 
   // Funciones 
   async function buscarConciertos() {
-    if (conciertos.value.length > 0) return // No buscar si ya tengo datos
+    if (conciertos.value.length > 0) return Promise.resolve() // No buscar si ya tengo datos
 
     estaCargando.value = true
     errorApi.value = null
@@ -122,6 +133,30 @@ export const useConciertosStore = defineStore('conciertos', () => {
     return eventosUsuario.value.includes(conciertoId)
   }
 
+  // Búsquedas recientes de ciudades
+  const STORAGE_KEY_BUSQUEDAS = 'soundspot-busquedas-recientes'
+  const busquedasRecientes = ref(
+    JSON.parse(localStorage.getItem(STORAGE_KEY_BUSQUEDAS) || '[]')
+  )
+
+  // Guardar búsqueda reciente
+  function guardarBusquedaCiudad(ciudad) {
+    if (!ciudad) return
+    
+    const busquedas = busquedasRecientes.value
+    // Remover si ya existe para evitar duplicados
+    const index = busquedas.indexOf(ciudad)
+    if (index > -1) {
+      busquedas.splice(index, 1)
+    }
+    // Agregar al inicio
+    busquedas.unshift(ciudad)
+    // Mantener solo las últimas 5 búsquedas
+    busquedasRecientes.value = busquedas.slice(0, 5)
+    // Guardar en localStorage
+    localStorage.setItem(STORAGE_KEY_BUSQUEDAS, JSON.stringify(busquedasRecientes.value))
+  }
+
   // Retorno todas las variables y funciones que quiero que estén disponibles para mis componentes de Vue.
   return {
     conciertos,
@@ -130,8 +165,10 @@ export const useConciertosStore = defineStore('conciertos', () => {
     eventosUsuario,
     conteoAsistire,
     ciudadesDisponibles,
+    busquedasRecientes,
     buscarConciertos,
     alternarAsistencia,
-    vaAAsistir
+    vaAAsistir,
+    guardarBusquedaCiudad
   }
 })

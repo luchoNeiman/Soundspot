@@ -17,6 +17,7 @@ function seleccionarCiudad(sugerencia) {
     ciudadInput.value = sugerencia
     ciudad.value = sugerencia
     mostrarSugerencias.value = false
+    storeConciertos.guardarBusquedaCiudad(sugerencia)
 }
 
 function ocultarSugerencias() {
@@ -34,7 +35,13 @@ const ciudadesDisponibles = computed(() => storeConciertos.ciudadesDisponibles)
 // Lista filtrada de sugerencias basada en el input del usuario
 const sugerenciasCiudades = computed(() => {
     const busqueda = ciudadInput.value.toLowerCase().trim()
-    if (!busqueda) return ciudadesDisponibles.value
+    if (!busqueda) {
+        // Si no hay búsqueda, mostrar búsquedas recientes primero
+        const recientes = storeConciertos.busquedasRecientes
+        const disponibles = ciudadesDisponibles.value
+        const todasLasCiudades = [...new Set([...recientes, ...disponibles])]
+        return todasLasCiudades
+    }
     return ciudadesDisponibles.value.filter(ciudad => 
         ciudad.toLowerCase().includes(busqueda)
     )
@@ -132,11 +139,18 @@ const anios = computed(() => [
                     :class="{ show: mostrarSugerencias && sugerenciasCiudades.length > 0 }"
                     @mouseenter="mantenerDropdownAbierto = true"
                     @mouseleave="mantenerDropdownAbierto = false">
+                    <!-- Búsquedas recientes -->
+                    <li v-if="!ciudadInput && storeConciertos.busquedasRecientes.length > 0" class="dropdown-header">
+                        Búsquedas recientes
+                    </li>
                     <li v-for="sugerencia in sugerenciasCiudades" :key="sugerencia">
                         <button 
                             type="button"
                             class="dropdown-item" 
+                            :class="{ 'reciente': !ciudadInput && storeConciertos.busquedasRecientes.includes(sugerencia) }"
                             @click="seleccionarCiudad(sugerencia)">
+                            <i v-if="!ciudadInput && storeConciertos.busquedasRecientes.includes(sugerencia)" 
+                               class="bi bi-clock-history me-2"></i>
                             {{ sugerencia }}
                         </button>
                     </li>
@@ -220,6 +234,21 @@ const anios = computed(() => [
 .dropdown-item:hover,
 .dropdown-item:focus {
     background-color: var(--color-primario);
+    color: var(--bs-light);
+}
+
+.dropdown-header {
+    color: var(--color-secundario);
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+}
+
+.dropdown-item.reciente {
+    color: var(--color-secundario);
+}
+
+.dropdown-item.reciente:hover {
     color: var(--bs-light);
 }
 </style>
