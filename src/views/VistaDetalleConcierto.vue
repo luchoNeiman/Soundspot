@@ -14,13 +14,15 @@ const route = useRoute()
 const router = useRouter()
 const storeConciertos = useConciertosStore()
 
-// Obtenemos el ID del concierto desde la URL (ej: /concierto/3 -> id = '3')
-const conciertoId = computed(() => parseInt(route.params.id)) // Convertimos a número
+// Obtenemos el ID del concierto desde la URL (Ticketmaster usa IDs como string)
+// No convertimos a número porque los IDs de la API son cadenas (alfanuméricas).
+const conciertoId = computed(() => String(route.params.id))
 
 // Buscamos el concierto en el store usando el ID de la ruta
 // Usamos computed para que se recalcule si el store cambia (aunque aquí no debería)
 const concierto = computed(() => {
-    return storeConciertos.conciertos.find(c => c.id === conciertoId.value)
+    // Buscar por igualdad de string (evitar coerciones que devuelvan falsos negativos)
+    return storeConciertos.conciertos.find(c => String(c.id) === conciertoId.value)
 })
 
 // Estado para el botón "Asistiré"
@@ -41,7 +43,8 @@ let mapInstance = null // Variable para guardar la instancia del mapa
 
 // Función para inicializar el mapa
 function inicializarMapa() {
-    if (mapContainer.value && concierto.value && !mapInstance) {
+    // Asegurarnos de que exista concierto y tenga coordenadas válidas
+    if (mapContainer.value && concierto.value && concierto.value.lat != null && concierto.value.lng != null && !mapInstance) {
         // Creo el mapa y lo centro en las coordenadas del concierto
         mapInstance = L.map(mapContainer.value).setView([concierto.value.lat, concierto.value.lng], 15); // Zoom 15
 
@@ -52,8 +55,8 @@ function inicializarMapa() {
 
         // Añado un marcador en la ubicación del concierto
         L.marker([concierto.value.lat, concierto.value.lng]).addTo(mapInstance)
-            .bindPopup(`<b>${concierto.value.lugar}</b><br>${concierto.value.artista}`) // Popup al hacer clic
-            .openPopup(); // Abrir popup por defecto
+            .bindPopup(`<b>${concierto.value.lugar}</b><br>${concierto.value.artista}`)
+            .openPopup();
     }
 }
 
@@ -105,8 +108,23 @@ function volverAtras() {
                     <h2 class="h4 mb-3">Detalles del Evento</h2>
                     <p><i class="bi bi-calendar-event me-2 icono-detalle"></i> Fecha: <strong>{{ concierto.fecha
                     }}</strong></p>
-                    <p><i class="bi bi-cash-coin me-2 icono-detalle"></i> Precio: <strong>${{ concierto.precio
-                    }}</strong></p>
+                    <p><i class="bi bi-cash-coin me-2 icono-detalle"></i> Precio: <strong>
+                        <template v-if="concierto.precio && concierto.precio.disponible">
+                            <template v-if="concierto.precio.min != null && concierto.precio.min === concierto.precio.max">
+                                {{ concierto.precio.moneda }} ${{ concierto.precio.min }}
+                            </template>
+                            <template v-else-if="concierto.precio.min != null && concierto.precio.max != null">
+                                {{ concierto.precio.moneda }} ${{ concierto.precio.min }} - ${{ concierto.precio.max }}
+                            </template>
+                            <template v-else-if="concierto.precio.min != null">
+                                {{ concierto.precio.moneda }} ${{ concierto.precio.min }}
+                            </template>
+                            <template v-else>
+                                Precio a confirmar
+                            </template>
+                        </template>
+                        <template v-else>Precio a confirmar</template>
+                    </strong></p>
                     <!-- Podrías añadir más detalles aquí si la API los proveyera -->
                 </section>
             </div>

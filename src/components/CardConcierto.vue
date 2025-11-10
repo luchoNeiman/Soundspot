@@ -42,7 +42,18 @@ function manejarAsistencia() {
                     {{ props.concierto.fecha }}
                 </p>
                 <p class="card-text fs-5 fw-semibold text-end mt-auto mb-3 precio">
-                    ${{ props.concierto.precio }}
+                    <template v-if="props.concierto.precio.disponible">
+                        <template v-if="props.concierto.precio.min === props.concierto.precio.max">
+                            {{ props.concierto.precio.moneda }} ${{ props.concierto.precio.min }}
+                        </template>
+                        <template v-else>
+                            {{ props.concierto.precio.moneda }} ${{ props.concierto.precio.min }} - ${{
+                                props.concierto.precio.max }}
+                        </template>
+                    </template>
+                    <template v-else>
+                        Precio a confirmar
+                    </template>
                 </p>
                 <div class="d-grid gap-2 d-sm-flex justify-content-sm-between align-items-center">
                     <RouterLink :to="{ name: 'detalle-concierto', params: { id: props.concierto.id } }"
@@ -68,6 +79,13 @@ function manejarAsistencia() {
     border-radius: calc(var(--radio-borde) + 3px);
     overflow: hidden;
     z-index: 1;
+    display: flex;
+    min-height: 26rem;
+    transition: transform 0.3s ease-in-out;
+}
+
+.card-wrapper:hover {
+    transform: translateY(-8px);
 }
 
 /* Pseudo-elemento para el borde animado */
@@ -113,17 +131,47 @@ function manejarAsistencia() {
 
 
 .imagen-concierto {
-    height: 12.5rem;
+    aspect-ratio: 16/10;
+    width: 100%;
+    min-height: 12.5rem;
     object-fit: cover;
+    object-position: center;
     border-top-left-radius: var(--radio-borde);
     border-top-right-radius: var(--radio-borde);
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
+    transition: transform 0.5s ease;
+}
+
+.card-wrapper:hover .imagen-concierto {
+    transform: scale(1.05);
 }
 
 .titulo-artista {
     font-family: var(--fuente-titulos);
     color: var(--bs-emphasis-color);
+    transition: color 0.3s ease;
+    position: relative;
+    display: inline-block;
+}
+
+.card-wrapper:hover .titulo-artista {
+    color: var(--color-secundario);
+}
+
+.titulo-artista::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: -2px;
+    left: 0;
+    background: var(--color-secundario);
+    transition: width 0.3s ease;
+}
+
+.card-wrapper:hover .titulo-artista::after {
+    width: 100%;
 }
 
 .card-body {
@@ -133,15 +181,79 @@ function manejarAsistencia() {
 .info-lugar,
 .info-fecha {
     font-size: 0.875rem;
+    transition: transform 0.3s ease, color 0.3s ease;
+}
+
+.card-wrapper:hover .info-lugar,
+.card-wrapper:hover .info-fecha {
+    transform: translateX(5px);
+    color: var(--color-texto-principal) !important;
+}
+
+.card-wrapper:hover .info-lugar i,
+.card-wrapper:hover .info-fecha i {
+    color: var(--color-secundario);
 }
 
 .precio {
     color: var(--color-texto-principal);
+    transition: transform 0.3s ease, color 0.3s ease;
+}
+
+.card-wrapper:hover .precio {
+    transform: scale(1.05);
+    color: var(--color-secundario);
 }
 
 @media (max-width: 575.98px) {
     .d-grid>.btn+.btn {
         margin-top: 0.5rem;
+    }
+}
+
+/* Animaciones para los botones */
+.btn {
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.card-wrapper:hover .btn {
+    transform: translateY(-2px);
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s ease, height 0.6s ease;
+}
+
+.btn:hover::before {
+    width: 300%;
+    height: 300%;
+}
+
+/* Efecto de brillo en el borde animado */
+.card-wrapper:hover::before {
+    animation: borde-animado 3s linear infinite, brillo 2s ease-in-out infinite;
+}
+
+@keyframes brillo {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.7;
     }
 }
 </style>

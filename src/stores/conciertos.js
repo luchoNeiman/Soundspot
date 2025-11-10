@@ -4,7 +4,13 @@ import { ref, computed } from 'vue'
 // API Key de Ticketmaster
 const API_KEY = '5TjrtE9vOIGvZPpAZFvhODr9pyZcivHD'
 // URL de la API de Ticketmaster para eventos de música en Argentina
-const API_URL = `https://app.ticketmaster.com/discovery/v2/events.json?apikey=${API_KEY}`
+// const API_URL = `https://app.ticketmaster.com/discovery/v2/events.json?classificationName=music&apikey=${API_KEY}`
+// https://app.ticketmaster.com/discovery/v2/events.json?classificationName=music&apikey={TU_API_KEY}
+const API_URL = `https://app.ticketmaster.com/discovery/v2/events.json?countryCode=US&classificationName=music&apikey=${API_KEY}`
+
+// https://app.ticketmaster.com/discovery/v2/events.json?countryCode=US&classificationName=music&apikey=TU_API_KEY
+
+
 
 // Función para transformar los datos de la API a mi formato
 function transformarDatosApi(evento) {
@@ -14,7 +20,11 @@ function transformarDatosApi(evento) {
   // Obtenemos los datos de ubicación
   const venue = evento._embedded?.venues?.[0];
 
-  const precioMin = evento.priceRanges?.[0]?.min || 0
+  // Obtener información de precios
+  const precioRango = evento.priceRanges?.[0]
+  const precioMin = precioRango?.min
+  const precioMax = precioRango?.max
+  const moneda = precioRango?.currency || 'ARS'
 
   return {
     id: evento.id,
@@ -22,7 +32,12 @@ function transformarDatosApi(evento) {
     lugar: venue?.name || 'Lugar a confirmar',
     ciudad: venue?.city?.name || 'Ciudad no disponible',
     fecha: evento.dates?.start?.localDate || 'Fecha a confirmar',
-    precio: precioMin, // Precio mínimo (o 0 si no está)
+    precio: {
+      min: precioMin,
+      max: precioMax,
+      moneda,
+      disponible: !!precioRango
+    },
     imagen: imagen,
     lat: parseFloat(venue?.location?.latitude) || null, // Latitud (default a Bs As si no hay)
     lng: parseFloat(venue?.location?.longitude) || null // Longitud (default a Bs As si no hay)
@@ -43,6 +58,12 @@ export const useConciertosStore = defineStore('conciertos', () => {
   // GETTERS 
   // Creo una propiedad computada que me dice la cantidad de eventos a los que voy a asistir. Simplemente cuenta los elementos en 'eventosUsuario'.
   const conteoAsistire = computed(() => eventosUsuario.value.length)
+
+  // Lista única de ciudades disponibles, ordenada alfabéticamente
+  const ciudadesDisponibles = computed(() => {
+    const ciudades = new Set(conciertos.value.map(c => c.ciudad))
+    return Array.from(ciudades).sort()
+  })
 
 
   // Funciones 
@@ -108,6 +129,7 @@ export const useConciertosStore = defineStore('conciertos', () => {
     errorApi,
     eventosUsuario,
     conteoAsistire,
+    ciudadesDisponibles,
     buscarConciertos,
     alternarAsistencia,
     vaAAsistir

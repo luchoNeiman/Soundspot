@@ -93,8 +93,14 @@ const conciertosFiltrados = computed(() => {
 });
 
 function obtenerUbicacion() {
+    // Si ya hay una ubicación activa, la desactivamos
+    if (ubicacionUsuario.value) {
+        ubicacionUsuario.value = null
+        errorGeolocalizacion.value = null
+        return
+    }
+
     errorGeolocalizacion.value = null // Reseteo errores previos
-    ubicacionUsuario.value = null // Reseteo ubicación previa
     buscandoUbicacion.value = true // Indico que estoy buscando
 
     if (!navigator.geolocation) {
@@ -132,102 +138,14 @@ function obtenerUbicacion() {
 }
 </script>
 
-<!-- <template>
-    <section class="vista-inicio mb-5">
-        <h1 class="mb-4">Próximos Conciertos</h1>
-
-        <div v-if="errorGeolocalizacion" class="alert alert-warning d-flex align-items-center" role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-2 flex-shrink-0 fs-4"></i>
-            <div>
-                <h4 class="alert-heading h5 mb-0">{{ errorGeolocalizacion }}</h4>
-            </div>
-        </div>
-
-        <TarjetaUbicacion v-if="ubicacionUsuario && !errorGeolocalizacion" :ubicacion="ubicacionUsuario" />
-
-        <FiltrosBusqueda v-model:ciudad="filtroCiudad" v-model:mes="filtroMes" v-model:anio="filtroAnio"
-            :buscando-ubicacion="buscandoUbicacion" @buscar-ubicacion="obtenerUbicacion" />
-
-        <div v-if="errorGeolocalizacion" class="alert alert-warning d-flex align-items-center" role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-2 flex-shrink-0"></i>
-            <div>{{ errorGeolocalizacion }}</div>
-        </div>
-
-        <div v-if="ubicacionUsuario && !errorGeolocalizacion" class="alert alert-info d-flex align-items-center"
-            role="status">
-            <i class="bi bi-check-circle-fill me-2 flex-shrink-0"></i>
-            <div>
-                Ubicación obtenida: Lat {{ ubicacionUsuario.lat.toFixed(4) }}, Lng {{ ubicacionUsuario.lng.toFixed(4)
-                }}.
-                <em class="d-block small">(Funcionalidad de ordenar por cercanía pendiente)</em>
-            </div>
-        </div>
-
-        <section aria-labelledby="resultados-titulo">
-            <h2 id="resultados-titulo" class="visually-hidden">Resultados de Conciertos</h2>
-
-            <div v-if="conciertosFiltrados.length > 0" class="row g-4">
-                <div v-for="concierto in conciertosFiltrados" :key="concierto.id"
-                    class="col-md-6 col-lg-4 d-flex align-items-stretch">
-
-                    <CardConcierto :concierto="concierto" />
-                </div>
-            </div>
-
-            <div v-else class="alert alert-secondary text-center mt-4" role="status">
-                <p class="mb-0">No se encontraron conciertos que coincidan.</p>
-            </div>
-        </section>
-
-    </section>
-</template>
-
-<style scoped>
-.vista-inicio {
-    padding-top: 1rem;
-}
-
-.btn:disabled {
-    cursor: wait;
-}
-
-.alert {
-    margin-top: 1.5rem;
-
-    i.bi {
-        flex-shrink: 0;
-    }
-
-    /* Asegurar que el icono no se encoja */
-}
-</style> -->
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 <template>
     <section class="vista-inicio mb-5">
         <h1 class="mb-4">Próximos Conciertos</h1>
 
         <FiltrosBusqueda v-model:ciudad="filtroCiudad" v-model:mes="filtroMes" v-model:anio="filtroAnio"
-            :buscando-ubicacion="buscandoUbicacion" @buscar-ubicacion="obtenerUbicacion" />
+            :buscando-ubicacion="buscandoUbicacion" :ubicacion-activa="!!ubicacionUsuario"
+            @buscar-ubicacion="obtenerUbicacion" />
 
         <div v-if="errorGeolocalizacion" class="alert alert-warning d-flex align-items-center" role="alert">
             <i class="bi bi-exclamation-triangle-fill me-2 flex-shrink-0 fs-4"></i>
