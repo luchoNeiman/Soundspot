@@ -28,7 +28,3 @@ const misEventos = computed(() => {
         </div>
     </section>
 </template>
-
-<style scoped>
-/* Estilos específicos si son necesarios */
-</style>

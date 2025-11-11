@@ -145,7 +145,7 @@ function volverAtras() {
                 <section class="info-adicional">
                     <h2 class="h4 mb-3">Detalles del Evento</h2>
                     <p><i class="bi bi-calendar-event me-2 icono-detalle"></i> Fecha: <strong>{{ concierto.fecha
-                            }}</strong></p>
+                    }}</strong></p>
                     <p><i class="bi bi-cash-coin me-2 icono-detalle"></i> Precio: <strong>
                             <template v-if="concierto.precio && concierto.precio.disponible">
                                 <template
@@ -165,18 +165,22 @@ function volverAtras() {
                             </template>
                             <template v-else>Precio a confirmar</template>
                         </strong></p>
-                    <!-- Si la API provee descripción, género, o info extra, se muestra aquí -->
+                    <!-- Si la API provee descripción, género, o info extra, se muestra aca, igual creo que no tiene, pero lo pongo por las dudas -->
                     <template v-if="concierto.descripcion">
-                        <p class="mb-2"><i class="bi bi-info-circle me-2 icono-detalle"></i> <strong>Descripción:</strong> {{ concierto.descripcion }}</p>
+                        <p class="mb-2"><i class="bi bi-info-circle me-2 icono-detalle"></i>
+                            <strong>Descripción:</strong> {{ concierto.descripcion }}</p>
                     </template>
                     <template v-if="concierto.genero">
-                        <p class="mb-2"><i class="bi bi-music-note-list me-2 icono-detalle"></i> <strong>Género:</strong> {{ concierto.genero }}</p>
+                        <p class="mb-2"><i class="bi bi-music-note-list me-2 icono-detalle"></i>
+                            <strong>Género:</strong> {{ concierto.genero }}</p>
                     </template>
                     <template v-if="concierto.organizador">
-                        <p class="mb-2"><i class="bi bi-person-badge me-2 icono-detalle"></i> <strong>Organizador:</strong> {{ concierto.organizador }}</p>
+                        <p class="mb-2"><i class="bi bi-person-badge me-2 icono-detalle"></i>
+                            <strong>Organizador:</strong> {{ concierto.organizador }}</p>
                     </template>
                     <template v-if="concierto.web">
-                        <p class="mb-2"><i class="bi bi-link-45deg me-2 icono-detalle"></i> <strong>Web:</strong> <a :href="concierto.web" target="_blank" rel="noopener">{{ concierto.web }}</a></p>
+                        <p class="mb-2"><i class="bi bi-link-45deg me-2 icono-detalle"></i> <strong>Web:</strong> <a
+                                :href="concierto.web" target="_blank" rel="noopener">{{ concierto.web }}</a></p>
                     </template>
                 </section>
             </div>
@@ -185,7 +189,6 @@ function volverAtras() {
             <div class="col-lg-6 d-flex flex-column">
                 <section class="mapa-seccion mb-4 flex-grow-1" aria-label="Mapa de ubicación del evento">
                     <h2 class="h4 mb-3">Ubicación</h2>
-                    <!-- Contenedor del mapa con altura definida -->
                     <div ref="mapContainer" class="mapa-leaflet shadow rounded"></div>
                 </section>
 
@@ -225,7 +228,6 @@ function volverAtras() {
 
 <style scoped>
 .detalle-concierto {
-    /* Espaciado general si es necesario */
     padding-top: 1rem;
 }
 
@@ -233,7 +235,6 @@ function volverAtras() {
     font-family: var(--fuente-titulos);
     color: var(--bs-emphasis-color);
     font-weight: 700;
-    /* Asegurar bold */
 }
 
 .lead {
@@ -242,41 +243,30 @@ function volverAtras() {
 
 figure img {
     width: 100%;
-    /* Asegurar que la imagen ocupe el contenedor */
 }
 
 .info-adicional p {
     font-family: var(--fuente-parrafos);
     font-size: 1.1rem;
-    /* Ligeramente más grande */
     margin-bottom: 0.75rem;
 }
 
 .icono-detalle {
     color: var(--color-secundario);
-    /* Color de acento para iconos */
     min-width: 1.5em;
-    /* Espacio reservado para el icono */
     display: inline-block;
-    /* Para alinear correctamente */
 }
 
 .mapa-seccion {
-    /* Asegurar que la sección del mapa pueda crecer */
     display: flex;
     flex-direction: column;
     min-height: 25rem;
-    /* Altura mínima para el mapa */
 }
 
 .mapa-leaflet {
     width: 100%;
-    /* height: 25rem; */
-    /* 400px aprox */
     flex-grow: 1;
-    /* Ocupa el espacio disponible en la columna flex */
     z-index: 1;
-    /* A veces necesario para que los controles del mapa funcionen */
 }
 
 /* Ajuste para asegurar que los popups de Leaflet tengan el estilo oscuro */
@@ -293,7 +283,6 @@ figure img {
 
 :deep(.leaflet-control-attribution a) {
     color: var(--color-texto-secundario);
-    /* Hacer link de atribución menos prominente */
 }
 
 :deep(.leaflet-control-attribution) {
@@ -304,7 +293,6 @@ figure img {
 
 .d-grid .btn {
     padding-top: 0.75rem;
-    /* Botones un poco más altos */
     padding-bottom: 0.75rem;
     font-size: 1.1rem;
 }
