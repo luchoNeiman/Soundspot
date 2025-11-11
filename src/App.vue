@@ -1,5 +1,4 @@
 <script setup>
-// Importo los componentes necesarios de vue-router y mi cabecera
 import { RouterView } from 'vue-router'
 import Header from '@/components/Header.vue';
 </script>
@@ -35,9 +34,7 @@ main {
 
 .pie-pagina {
   background-color: var(--color-superficie);
-  /* Fondo oscuro como las cards */
   border-top: 1px solid var(--color-borde);
-  /* Línea divisoria sutil */
   font-family: var(--fuente-parrafos);
 }
 </style>

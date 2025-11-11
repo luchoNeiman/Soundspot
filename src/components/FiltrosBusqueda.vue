@@ -3,25 +3,30 @@ import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useConciertosStore } from '@/stores/conciertos.js'
 
 const storeConciertos = useConciertosStore()
-const ciudadInput = ref('')
-const mostrarSugerencias = ref(false)
-const mantenerDropdownAbierto = ref(false)
+const ciudadInput = ref('') // Texto que escribe el usuario en el input
+const mostrarSugerencias = ref(false) // Controla si el dropdown está visible
+const mantenerDropdownAbierto = ref(false) // Evita cerrar el dropdown si el mouse está sobre él
 
-// Funciones para manejar el dropdown
+// Manejadores del dropdown de ciudades
+// Actualiza el filtro mientras el usuario escribe y muestra sugerencias
 function manejarInput() {
     ciudad.value = ciudadInput.value
     mostrarSugerencias.value = true
 }
 
+// Cuando el usuario selecciona una ciudad del dropdown
+// La guardo en el historial y cerramos el dropdown
 function seleccionarCiudad(sugerencia) {
     ciudadInput.value = sugerencia
     ciudad.value = sugerencia
     mostrarSugerencias.value = false
+    // Guardar en el historial de búsquedas
     storeConciertos.guardarBusquedaCiudad(sugerencia)
 }
 
+// Oculta el dropdown con un pequeño delay
+// Esto permite que el usuario pueda hacer clic en las opciones sin que se cierre
 function ocultarSugerencias() {
-    // Solo oculta si el mouse no está sobre el dropdown
     setTimeout(() => {
         if (!mantenerDropdownAbierto.value) {
             mostrarSugerencias.value = false
@@ -29,36 +34,46 @@ function ocultarSugerencias() {
     }, 150)
 }
 
-// Lista de ciudades disponibles desde el store
+// obtengo la lista de ciudades disponibles desde el store
 const ciudadesDisponibles = computed(() => storeConciertos.ciudadesDisponibles)
 
-// Lista filtrada de sugerencias basada en el input del usuario
+// calculo las sugerencias que mostrar en el dropdown
+// Si el usuario está escribiendo, filtro las ciudades disponibles
+// Si no escribe nada, muestro sus búsquedas recientes primero, luego todas las ciudades
 const sugerenciasCiudades = computed(() => {
     const busqueda = ciudadInput.value.toLowerCase().trim()
     if (!busqueda) {
-        // Si no hay búsqueda, mostrar búsquedas recientes primero
+        // Mostrar recientes + disponibles sin duplicados
         const recientes = storeConciertos.busquedasRecientes
         const disponibles = ciudadesDisponibles.value
+        // Set elimina duplicados automáticamente
         const todasLasCiudades = [...new Set([...recientes, ...disponibles])]
         return todasLasCiudades
     }
-    return ciudadesDisponibles.value.filter(ciudad => 
+    // Filtrar ciudades que contengan el texto de búsqueda
+    return ciudadesDisponibles.value.filter(ciudad =>
         ciudad.toLowerCase().includes(busqueda)
     )
 })
 
-// Computed property para detectar si estamos en tablet o móvil
-const isMobileOrTablet = computed(() => window.innerWidth < 992) // 992px es el breakpoint de Bootstrap para lg
+// Detecto si estoy en un dispositivo pequeño (móvil o tablet)
+// 992px es el breakpoint de Bootstrap para pantallas "lg" (large)
+// Usamos esto para ajustar la visibilidad del texto del botón de ubicación
+const isMobileOrTablet = computed(() => window.innerWidth < 992)
 
-// Reactive reference para el ancho de la ventana
+// Guardo el ancho actual de la ventana
+// Esto nos permite reaccionar a cambios de tamaño de pantalla
 const windowWidth = ref(window.innerWidth)
 
-// Función para actualizar el ancho de la ventana
+// Función que se ejecuta cuando el usuario redimensiona la ventana
+// Actualiza nuestro conocimiento del ancho para que computed funcione correctamente
 const updateWidth = () => {
     windowWidth.value = window.innerWidth
 }
 
-// Lifecycle hooks para manejar el evento resize
+// Agrego y remuevo el listener para detectar cambios de tamaño
+// onMounted: se ejecuta cuando el componente se carga
+// onUnmounted: se ejecuta cuando salimos del componente (cleanup)
 onMounted(() => {
     window.addEventListener('resize', updateWidth)
 })
@@ -111,7 +126,7 @@ const meses = computed(() => [
     { valor: 12, nombre: 'Diciembre' }
 ])
 
-// Creamos una lista de años (puedes hacerla más dinámica si quieres)
+// Creo una lista de años (puedes hacerla más dinámica si quieres)
 const anios = computed(() => [
     { valor: 0, nombre: 'Todos los Años' },
     { valor: 2025, nombre: '2025' },
@@ -124,33 +139,21 @@ const anios = computed(() => [
         <div class="col-md-4 col-sm-12">
             <label for="filtroCiudad" class="form-label">Ciudad:</label>
             <div class="dropdown">
-                <input 
-                    type="search" 
-                    id="filtroCiudad" 
-                    class="form-control border-light" 
-                    v-model="ciudadInput"
-                    @input="manejarInput"
-                    @focus="mostrarSugerencias = true"
-                    @blur="ocultarSugerencias"
-                    placeholder="Buscar por ciudad..." 
-                    autocomplete="off"
-                    aria-label="Filtrar conciertos por ciudad" />
-                <ul class="dropdown-menu w-100" 
-                    :class="{ show: mostrarSugerencias && sugerenciasCiudades.length > 0 }"
-                    @mouseenter="mantenerDropdownAbierto = true"
-                    @mouseleave="mantenerDropdownAbierto = false">
+                <input type="search" id="filtroCiudad" class="form-control border-light" v-model="ciudadInput"
+                    @input="manejarInput" @focus="mostrarSugerencias = true" @blur="ocultarSugerencias"
+                    placeholder="Buscar por ciudad..." autocomplete="off" aria-label="Filtrar conciertos por ciudad" />
+                <ul class="dropdown-menu w-100" :class="{ show: mostrarSugerencias && sugerenciasCiudades.length > 0 }"
+                    @mouseenter="mantenerDropdownAbierto = true" @mouseleave="mantenerDropdownAbierto = false">
                     <!-- Búsquedas recientes -->
                     <li v-if="!ciudadInput && storeConciertos.busquedasRecientes.length > 0" class="dropdown-header">
                         Búsquedas recientes
                     </li>
                     <li v-for="sugerencia in sugerenciasCiudades" :key="sugerencia">
-                        <button 
-                            type="button"
-                            class="dropdown-item" 
+                        <button type="button" class="dropdown-item"
                             :class="{ 'reciente': !ciudadInput && storeConciertos.busquedasRecientes.includes(sugerencia) }"
                             @click="seleccionarCiudad(sugerencia)">
-                            <i v-if="!ciudadInput && storeConciertos.busquedasRecientes.includes(sugerencia)" 
-                               class="bi bi-clock-history me-2"></i>
+                            <i v-if="!ciudadInput && storeConciertos.busquedasRecientes.includes(sugerencia)"
+                                class="bi bi-clock-history me-2"></i>
                             {{ sugerencia }}
                         </button>
                     </li>
@@ -180,11 +183,11 @@ const anios = computed(() => [
                 <i v-else :class="[
                     'bi',
                     props.ubicacionActiva ? 'bi-geo-alt-fill' : 'bi-geo-alt',
-                    {'me-1': !isMobileOrTablet}
+                    { 'me-1': !isMobileOrTablet }
                 ]"></i>
-                <span :class="{'d-none': isMobileOrTablet}">
-                    {{ props.buscandoUbicacion ? 'Buscando...' : 
-                       props.ubicacionActiva ? 'Quitar ubicación' : 'Usar mi ubicación' }}
+                <span :class="{ 'd-none': isMobileOrTablet }">
+                    {{ props.buscandoUbicacion ? 'Buscando...' :
+                        props.ubicacionActiva ? 'Quitar ubicación' : 'Usar mi ubicación' }}
                 </span>
             </button>
         </div>
@@ -193,7 +196,6 @@ const anios = computed(() => [
 
 <style scoped>
 .form-select {
-    /* Tus estilos de estilos.css ya deberían cubrir esto, pero por si acaso */
     background-color: var(--bs-form-control-bg);
     color: var(--bs-form-control-color);
     border-color: var(--bs-form-control-border-color);
@@ -208,6 +210,7 @@ const anios = computed(() => [
         font-size: 1.2rem;
         margin: 0;
     }
+
     .btn {
         padding: 0.375rem 1rem;
     }

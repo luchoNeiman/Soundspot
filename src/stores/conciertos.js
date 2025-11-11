@@ -12,35 +12,43 @@ const API_URL = `https://app.ticketmaster.com/discovery/v2/events.json?countryCo
 
 
 
-// Función para transformar los datos de la API a mi formato
+// Función para transformar los datos de la API a mi formato personalizado
+// Esto es necesario porque la API devuelve una estructura muy anidada y con muchos datos innecesarios
+// Aca extraigo solo lo que necesito y lo organizo de forma más clara
 function transformarDatosApi(evento) {
-  // imagen con la mejor calidad (ratio 16_9 y tamaño mediano)
+  // Buscomos la imagen con mejor calidad: Prefiero las que tengan ratio 16:9 y ancho mayor a 400px
+  // Si no la encuentro, uso la primera imagen disponible del evento
   const imagen = evento.images.find(img => img.ratio === '16_9' && img.width > 400)?.url || evento.images[0].url
 
-  // Obtenemos los datos de ubicación
+  // Extraigo los datos de ubicación (venue) del evento
+  // Uso optional chaining (?.) para evitar errores si la propiedad no existe
   const venue = evento._embedded?.venues?.[0];
 
-  // Obtener información de precios
+  // Obtengo la información de precios. Los precios vienen en un array, tomo el primero
+  // También extraigo la moneda, que por defecto será 'ARS' si no está disponible
   const precioRango = evento.priceRanges?.[0]
   const precioMin = precioRango?.min
   const precioMax = precioRango?.max
   const moneda = precioRango?.currency || 'ARS'
 
+  // Retorno un objeto con la estructura que uso en toda la aplicación
   return {
     id: evento.id,
-    artista: evento._embedded?.attractions?.[0]?.name || evento.name, // Nombre de la atracción o del evento
+    artista: evento._embedded?.attractions?.[0]?.name || evento.name,
     lugar: venue?.name || 'Lugar a confirmar',
     ciudad: venue?.city?.name || 'Ciudad no disponible',
     fecha: evento.dates?.start?.localDate || 'Fecha a confirmar',
+    // El precio lo guardo como un objeto para poder mostrar rangos (min-max)
     precio: {
       min: precioMin,
       max: precioMax,
       moneda,
-      disponible: !!precioRango
+      disponible: !!precioRango // Convierto a booleano: true si hay datos, false si no
     },
     imagen: imagen,
-    lat: parseFloat(venue?.location?.latitude) || null, // Latitud (default a Bs As si no hay)
-    lng: parseFloat(venue?.location?.longitude) || null // Longitud (default a Bs As si no hay)
+    // Las coordenadas las parseo a número para poder usar con Leaflet (mapa)
+    lat: parseFloat(venue?.location?.latitude) || null,
+    lng: parseFloat(venue?.location?.longitude) || null
   }
 }
 
@@ -52,7 +60,7 @@ export const useConciertosStore = defineStore('conciertos', () => {
 
   // STATE 
   const conciertos = ref([])
-  const estaCargando = ref(false) // Estado para saber si estamos cargando datos
+  const estaCargando = ref(false) // Estado para saber si estoy cargando datos
   const errorApi = ref(null) // Para guardar errores de la API
 
   // Creo un array reactivo para guardar únicamente los IDs de los conciertos a los que el usuario marque como "Asistiré" o "Interesado".
@@ -77,59 +85,71 @@ export const useConciertosStore = defineStore('conciertos', () => {
   })
 
 
-  // Funciones 
+  // Función principal para buscar conciertos desde la API
+  // La llamamos con "await" para esperar a que termine antes de continuar
   async function buscarConciertos() {
-    if (conciertos.value.length > 0) return Promise.resolve() // No buscar si ya tengo datos
+    // Si ya tenemos conciertos cargados, no volvemos a llamar la API (ahorro de datos)
+    if (conciertos.value.length > 0) return Promise.resolve()
 
     estaCargando.value = true
     errorApi.value = null
 
-    console.log("Buscando conciertos en Ticketmaster...");
-
     try {
+      // Hago la solicitud a la API de Ticketmaster
       const respuesta = await fetch(API_URL)
-      console.log("probando para ver si entra");
 
+      // Verifico que la respuesta sea exitosa (código 200, etc)
       if (!respuesta.ok) {
         throw new Error(`Error ${respuesta.status}: No se pudo conectar con la API.`)
       }
+
+      // Convierto la respuesta a JSON
       const data = await respuesta.json()
-      console.log(data);
-      // Ticketmaster devuelve los eventos en data._embedded.events
+
+      // Ticketmaster devuelve los eventos dentro de data._embedded.events
+      // Primero verifico que esta estructura exista, luego proceso los datos
       if (data._embedded && data._embedded.events) {
-        // Transformo los datos de la API a nuestro formato
+        // Transformo cada evento al formato que usamos en nuestra app
+        // Luego filtro solo los que tengan coordenadas (para poder mostrarlos en el mapa)
         conciertos.value = data._embedded.events
           .map(transformarDatosApi)
-          .filter(c => c.lat && c.lng); // Filtro solo los que tienen latitud y longitud
-        console.log("Conciertos cargados:", conciertos.value);
+          .filter(c => c.lat && c.lng);
       } else {
-        conciertos.value = [] // No se encontraron eventos
+        // Si la API no devuelve eventos, dejo el array vacío
+        conciertos.value = []
       }
 
     } catch (error) {
+      // Si hay error (sin conexión, error de la API, etc), lo guardamos para mostrar en la UI
       console.error("Error al buscar conciertos:", error)
       errorApi.value = error.message
     } finally {
-      estaCargando.value = false // Dejo de cargar, sea éxito o error
+      // Siempre ejecuto esto al final, sin importar si hubo error o no
+      // Esto detiene el spinner de carga
+      estaCargando.value = false
     }
   }
 
 
+  // Esta función alterna el estado de asistencia de un usuario a un concierto
+  // Si no asistía → lo marcamos como que va a asistir
+  // Si ya iba a asistir → lo desmarco (quita su interés)
   function alternarAsistencia(conciertoId) {
-    // Busco si el ID ya existe en mi array 'eventosUsuario'
     const indice = eventosUsuario.value.indexOf(conciertoId)
 
     if (indice === -1) {
-      // Si no está (indexOf devuelve -1), lo agrego a la lista
+      // El ID no está en la lista, así que lo agregamos
       eventosUsuario.value.push(conciertoId)
     } else {
-      // Si ya está, lo elimino de la lista usando su índice (splice)
+      // El ID ya está, lo remuevo de la lista
+      // splice() modifica el array en el lugar, eliminando 1 elemento desde 'indice'
       eventosUsuario.value.splice(indice, 1)
     }
   }
 
+  // Verifico si el usuario va a asistir a un concierto específico
+  // Retorna true si el ID está en la lista, false si no
   function vaAAsistir(conciertoId) {
-    // .includes() lo uso para ver si el ID está en el array 'eventosUsuario'
     return eventosUsuario.value.includes(conciertoId)
   }
 
@@ -139,21 +159,26 @@ export const useConciertosStore = defineStore('conciertos', () => {
     JSON.parse(localStorage.getItem(STORAGE_KEY_BUSQUEDAS) || '[]')
   )
 
-  // Guardar búsqueda reciente
+  // Guardo el historial de búsquedas de ciudades del usuario
+  // Esto permite mostrar "búsquedas recientes" en el dropdown del filtrador
   function guardarBusquedaCiudad(ciudad) {
-    if (!ciudad) return
-    
+    if (!ciudad) return // Si no hay ciudad, no hacemos nada
+
     const busquedas = busquedasRecientes.value
-    // Remover si ya existe para evitar duplicados
+
+    // Evitamos duplicados: si la ciudad ya está en el historial, la remuevo
     const index = busquedas.indexOf(ciudad)
     if (index > -1) {
       busquedas.splice(index, 1)
     }
-    // Agregar al inicio
+
+    // Agregamos la ciudad al inicio del array (la más reciente va primero)
     busquedas.unshift(ciudad)
-    // Mantener solo las últimas 5 búsquedas
+
+    // Mantener solo las últimas 5 búsquedas para no acumular datos innecesarios
     busquedasRecientes.value = busquedas.slice(0, 5)
-    // Guardar en localStorage
+
+    // Guardo en localStorage para que persista incluso después de cerrar el navegador
     localStorage.setItem(STORAGE_KEY_BUSQUEDAS, JSON.stringify(busquedasRecientes.value))
   }
 

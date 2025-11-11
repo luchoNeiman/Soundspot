@@ -1,6 +1,5 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-// useRoute para leer parámetros de la URL, useRouter para navegar
 import { useRoute, useRouter } from 'vue-router'
 // Importo el store para buscar el concierto y manejar asistencia
 import { useConciertosStore } from '@/stores/conciertos.js'
@@ -15,68 +14,85 @@ const router = useRouter()
 const storeConciertos = useConciertosStore()
 const cargandoDatos = ref(true)
 
-// Obtenemos el ID del concierto desde la URL (Ticketmaster usa IDs como string)
-// No convertimos a número porque los IDs de la API son cadenas (alfanuméricas).
+// extraigo el ID del concierto directamente desde la URL
+// Uso String() para asegurar que siempre sea una cadena de texto
+// (la API de Ticketmaster devuelve IDs alfanuméricos)
 const conciertoId = computed(() => String(route.params.id))
 
-// Función para cargar los datos necesarios
+// Esta función se encarga de cargar los conciertos si no están disponibles en el store
+// Se ejecuta cuando el usuario accede directamente a la URL (sin pasar por la lista)
 async function cargarDatos() {
     cargandoDatos.value = true
     try {
-        // Si no hay conciertos cargados, los cargamos
+        // Si el store está vacío, hago fetch a la API
         if (storeConciertos.conciertos.length === 0) {
             await storeConciertos.buscarConciertos()
         }
     } catch (error) {
         console.error('Error cargando datos:', error)
     } finally {
+        // En cualquier caso, termino la carga (mostrar datos o error)
         cargandoDatos.value = false
     }
 }
 
-// Buscamos el concierto en el store usando el ID de la ruta
-// Usamos computed para que se recalcule si el store cambia (aunque aquí no debería)
+// Busco el concierto dentro del array disponible en el store
+// Uso computed para que se actualice automáticamente si el store cambia
 const concierto = computed(() => {
-    // Buscar por igualdad de string (evitar coerciones que devuelvan falsos negativos)
+    // Comparo con strings para evitar problemas de coerción de tipos
+    // (por ejemplo, "123" !== 123 en JavaScript)
     return storeConciertos.conciertos.find(c => String(c.id) === conciertoId.value)
 })
 
-// Estado para el botón "Asistiré"
+// Esta propiedad calcula si el usuario ha marcado este concierto
+// Primero verifico que el concierto exista, luego consulto el store
 const asistiendo = computed(() => {
-    // Verificamos si 'concierto' existe antes de acceder a su id
     return concierto.value ? storeConciertos.vaAAsistir(concierto.value.id) : false
 })
 
+// Cuando el usuario hace clic en el botón "Asistiré", llamo a esta función
+// que alterna el estado en el store (agrega o quita el concierto de la lista)
 function manejarAsistencia() {
     if (concierto.value) {
         storeConciertos.alternarAsistencia(concierto.value.id)
     }
 }
 
-// --- Lógica del Mapa Leaflet ---
-const mapContainer = ref(null) // Referencia al div del mapa en el template
-let mapInstance = null // Variable para guardar la instancia del mapa
+// Lógica del Mapa Leaflet
+// Leaflet es una librería para mostrar mapas interactivos
+// Necesito referencias a variables para controlar la instancia del mapa
 
-// Función para inicializar el mapa
+const mapContainer = ref(null) // Referencia al elemento HTML donde irá el mapa
+let mapInstance = null // Guardo aca la instancia del mapa para poder destruirla después
+
+// Inicializa el mapa cuando tenemos todas las coordenadas disponibles
+// Se usa Leaflet para renderizar OpenStreetMap con un marcador en la ubicación del evento
 function inicializarMapa() {
-    // Asegurarnos de que exista concierto y tenga coordenadas válidas
+    // verifico todos los requisitos antes de crear el mapa:
+    // - Que el contenedor exista en el DOM
+    // - Que tengo datos del concierto
+    // - Que tengo coordenadas válidas (no null, no undefined)
+    // - Que no se haya creado un mapa ya
     if (mapContainer.value && concierto.value && concierto.value.lat != null && concierto.value.lng != null && !mapInstance) {
-        // Creo el mapa y lo centro en las coordenadas del concierto
-        mapInstance = L.map(mapContainer.value).setView([concierto.value.lat, concierto.value.lng], 15); // Zoom 15
+        // Crear el mapa centrado en las coordenadas del evento
+        // Zoom 15 es un buen nivel de detalle para ver la zona del evento
+        mapInstance = L.map(mapContainer.value).setView([concierto.value.lat, concierto.value.lng], 15);
 
-        // Añado una capa de tiles (mapa base) de OpenStreetMap
+        // Agregar la capa de OpenStreetMap (el mapa base que ven los usuarios)
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(mapInstance);
 
-        // Añado un marcador en la ubicación del concierto
+        // Colocar un marcador (pin) en la ubicación exacta del evento
+        // El popup muestra el lugar y el artista cuando haces clic en el pin
         L.marker([concierto.value.lat, concierto.value.lng]).addTo(mapInstance)
             .bindPopup(`<b>${concierto.value.lugar}</b><br>${concierto.value.artista}`)
-            .openPopup();
+            .openPopup(); // Abrimos el popup automáticamente
     }
 }
 
-// Función para destruir el mapa (evita errores al cambiar de página)
+// Es importante limpiar el mapa cuando salimos de esta página
+// Si no lo hacemos, Leaflet puede causar errores o consumir recursos innecesarios
 function destruirMapa() {
     if (mapInstance) {
         mapInstance.remove();
@@ -88,29 +104,32 @@ function destruirMapa() {
 onMounted(async () => {
     // Primero cargamos los datos si es necesario
     await cargarDatos()
-    
-    // Espero a que 'concierto' tenga valor
+
+    // uso watch para reaccionar cuando el concierto cambia
+    // immediate: true hace que se ejecute también cuando se monta (si ya hay datos)
     watch(concierto, (nuevoConcierto) => {
         if (nuevoConcierto) {
-            // Pequeña demora para asegurar que el DOM esté listo
+            // hago un pequeño delay para asegurar que el DOM esté listo
+            // (a veces Leaflet necesita que el contenedor esté completamente renderizado)
             setTimeout(inicializarMapa, 100);
         }
-    }, { immediate: true }); // immediate: true para ejecutarlo la primera vez también
+    }, { immediate: true });
 });
 
 // Destruyo el mapa cuando el componente se desmonta (cambio de página)
+// Esto evita que Leaflet interfiera con otras páginas
 onUnmounted(() => {
     destruirMapa();
 });
 
-// Función para volver a la página anterior
+// Función para navegar hacia atrás
+// El usuario puede volver a la lista o página anterior
 function volverAtras() {
-    router.back() // O router.push({ name: 'inicio' })
+    router.back()
 }
 </script>
 
 <template>
-    <!-- Usamos <article> para el contenido principal del detalle -->
     <article v-if="concierto" class="detalle-concierto">
         <div class="row g-4 g-lg-5">
             <!-- Columna Izquierda: Imagen e Info -->
@@ -126,25 +145,39 @@ function volverAtras() {
                 <section class="info-adicional">
                     <h2 class="h4 mb-3">Detalles del Evento</h2>
                     <p><i class="bi bi-calendar-event me-2 icono-detalle"></i> Fecha: <strong>{{ concierto.fecha
-                    }}</strong></p>
+                            }}</strong></p>
                     <p><i class="bi bi-cash-coin me-2 icono-detalle"></i> Precio: <strong>
-                        <template v-if="concierto.precio && concierto.precio.disponible">
-                            <template v-if="concierto.precio.min != null && concierto.precio.min === concierto.precio.max">
-                                {{ concierto.precio.moneda }} ${{ concierto.precio.min }}
+                            <template v-if="concierto.precio && concierto.precio.disponible">
+                                <template
+                                    v-if="concierto.precio.min != null && concierto.precio.min === concierto.precio.max">
+                                    {{ concierto.precio.moneda }} ${{ concierto.precio.min }}
+                                </template>
+                                <template v-else-if="concierto.precio.min != null && concierto.precio.max != null">
+                                    {{ concierto.precio.moneda }} ${{ concierto.precio.min }} - ${{ concierto.precio.max
+                                    }}
+                                </template>
+                                <template v-else-if="concierto.precio.min != null">
+                                    {{ concierto.precio.moneda }} ${{ concierto.precio.min }}
+                                </template>
+                                <template v-else>
+                                    Precio a confirmar
+                                </template>
                             </template>
-                            <template v-else-if="concierto.precio.min != null && concierto.precio.max != null">
-                                {{ concierto.precio.moneda }} ${{ concierto.precio.min }} - ${{ concierto.precio.max }}
-                            </template>
-                            <template v-else-if="concierto.precio.min != null">
-                                {{ concierto.precio.moneda }} ${{ concierto.precio.min }}
-                            </template>
-                            <template v-else>
-                                Precio a confirmar
-                            </template>
-                        </template>
-                        <template v-else>Precio a confirmar</template>
-                    </strong></p>
-                    <!-- Podrías añadir más detalles aquí si la API los proveyera -->
+                            <template v-else>Precio a confirmar</template>
+                        </strong></p>
+                    <!-- Si la API provee descripción, género, o info extra, se muestra aquí -->
+                    <template v-if="concierto.descripcion">
+                        <p class="mb-2"><i class="bi bi-info-circle me-2 icono-detalle"></i> <strong>Descripción:</strong> {{ concierto.descripcion }}</p>
+                    </template>
+                    <template v-if="concierto.genero">
+                        <p class="mb-2"><i class="bi bi-music-note-list me-2 icono-detalle"></i> <strong>Género:</strong> {{ concierto.genero }}</p>
+                    </template>
+                    <template v-if="concierto.organizador">
+                        <p class="mb-2"><i class="bi bi-person-badge me-2 icono-detalle"></i> <strong>Organizador:</strong> {{ concierto.organizador }}</p>
+                    </template>
+                    <template v-if="concierto.web">
+                        <p class="mb-2"><i class="bi bi-link-45deg me-2 icono-detalle"></i> <strong>Web:</strong> <a :href="concierto.web" target="_blank" rel="noopener">{{ concierto.web }}</a></p>
+                    </template>
                 </section>
             </div>
 
