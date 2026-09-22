@@ -59,7 +59,7 @@ const sugerenciasCiudades = computed(() => {
 // Detecto si estoy en un dispositivo pequeño (móvil o tablet)
 // 992px es el breakpoint de Bootstrap para pantallas "lg" (large)
 // Usamos esto para ajustar la visibilidad del texto del botón de ubicación
-const isMobileOrTablet = computed(() => window.innerWidth < 992)
+const isMobileOrTablet = computed(() => windowWidth.value < 992)
 
 // Guardo el ancho actual de la ventana
 // Esto nos permite reaccionar a cambios de tamaño de pantalla
@@ -126,12 +126,17 @@ const meses = computed(() => [
     { valor: 12, nombre: 'Diciembre' }
 ])
 
-// Creo una lista de años (puedes hacerla más dinámica si quieres)
-const anios = computed(() => [
-    { valor: 0, nombre: 'Todos los Años' },
-    { valor: 2025, nombre: '2025' },
-    { valor: 2026, nombre: '2026' }
-])
+// Se actualiza automáticamente al cambiar el año calendario.
+const anios = computed(() => {
+    const anioActual = new Date().getFullYear()
+
+    return [
+        { valor: 0, nombre: 'Todos los Años' },
+        { valor: anioActual - 1, nombre: String(anioActual - 1) },
+        { valor: anioActual, nombre: String(anioActual) },
+        { valor: anioActual + 1, nombre: String(anioActual + 1) }
+    ]
+})
 </script>
 
 <template>

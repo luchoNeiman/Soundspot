@@ -15,8 +15,6 @@ const ubicacionUsuario = ref(null)
 const errorGeolocalizacion = ref(null)
 const buscandoUbicacion = ref(false)
 
-const conciertos = computed(() => storeConciertos.conciertos)  //ver que hago con esto
-
 // Lógica de Conciertos (API)
 // Uso onMounted para llamar a la API solo una vez, cuando el componente se carga
 onMounted(() => {
@@ -26,6 +24,16 @@ onMounted(() => {
 // Accedeo a los estados de carga y error del store
 const estaCargando = computed(() => storeConciertos.estaCargando)
 const errorApi = computed(() => storeConciertos.errorApi)
+const resultadosLimitados = computed(() => storeConciertos.resultadosLimitados)
+
+function obtenerPartesFecha(fecha) {
+    const [anio, mes] = String(fecha).split('-').map(Number)
+    return { anio, mes }
+}
+
+function tieneCoordenadas(concierto) {
+    return Number.isFinite(concierto.lat) && Number.isFinite(concierto.lng)
+}
 
 /*
  * Calcula la distancia entre dos puntos (Lat/Lng) usando la fórmula de Haversine.
@@ -58,12 +66,12 @@ const conciertosFiltrados = computed(() => {
 
     // Filtrar por Año
     if (filtroAnio.value > 0) {
-        resultado = resultado.filter(c => new Date(c.fecha).getFullYear() === filtroAnio.value);
+        resultado = resultado.filter(c => obtenerPartesFecha(c.fecha).anio === filtroAnio.value);
     }
 
     // Filtrar por Mes
     if (filtroMes.value > 0) {
-        resultado = resultado.filter(c => (new Date(c.fecha).getUTCMonth() + 1) === filtroMes.value);
+        resultado = resultado.filter(c => obtenerPartesFecha(c.fecha).mes === filtroMes.value);
     }
 
     // ORDENACIÓN POR CERCANÍA (si tengo ubicación del usuario)
@@ -72,6 +80,9 @@ const conciertosFiltrados = computed(() => {
         // y ordeno el array 'resultado'.
         // Uso .slice() para crear una copia y no mutar el array original
         resultado = resultado.slice().sort((a, b) => {
+            if (!tieneCoordenadas(a)) return tieneCoordenadas(b) ? 1 : 0
+            if (!tieneCoordenadas(b)) return -1
+
             const distA = getDistanciaHaversine(
                 ubicacionUsuario.value.lat, ubicacionUsuario.value.lng,
                 a.lat, a.lng
@@ -86,7 +97,7 @@ const conciertosFiltrados = computed(() => {
 
     // Si no tengo ubicación, ordeno por fecha
     else {
-        resultado = resultado.slice().sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+        resultado = resultado.slice().sort((a, b) => String(a.fecha).localeCompare(String(b.fecha)));
     }
 
     return resultado;
@@ -172,6 +183,9 @@ function obtenerUbicacion() {
             </div>
 
             <div v-else>
+                <div v-if="resultadosLimitados" class="alert alert-info" role="status">
+                    Se encontraron más funciones de las que se pueden mostrar con fluidez. Se cargaron hasta 170, repartidas entre los tres años disponibles.
+                </div>
                 <div v-if="conciertosFiltrados.length > 0" class="row g-4">
                     <div v-for="concierto in conciertosFiltrados" :key="concierto.id"
                         class="col-md-6 col-lg-4 d-flex align-items-stretch">
