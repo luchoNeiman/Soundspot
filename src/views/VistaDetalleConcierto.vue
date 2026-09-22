@@ -58,6 +58,43 @@ function manejarAsistencia() {
     }
 }
 
+function textoCalendario(valor) {
+    return String(valor || '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n')
+}
+
+function fechaCalendario(fecha) {
+    return [fecha.getFullYear(), String(fecha.getMonth() + 1).padStart(2, '0'), String(fecha.getDate()).padStart(2, '0')].join('')
+}
+
+function agregarAlCalendario() {
+    if (!concierto.value || !/^\d{4}-\d{2}-\d{2}$/.test(concierto.value.fecha)) return
+
+    const [anio, mes, dia] = concierto.value.fecha.split('-').map(Number)
+    const inicio = new Date(anio, mes - 1, dia)
+    const fin = new Date(anio, mes - 1, dia + 1)
+    const contenido = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//SoundSpot//ES',
+        'BEGIN:VEVENT',
+        `UID:${concierto.value.id}@soundspot`,
+        `DTSTART;VALUE=DATE:${fechaCalendario(inicio)}`,
+        `DTEND;VALUE=DATE:${fechaCalendario(fin)}`,
+        `SUMMARY:${textoCalendario(concierto.value.artista)}`,
+        `LOCATION:${textoCalendario(`${concierto.value.lugar}, ${concierto.value.ciudad}`)}`,
+        concierto.value.web ? `URL:${textoCalendario(concierto.value.web)}` : '',
+        'END:VEVENT',
+        'END:VCALENDAR'
+    ].filter(Boolean).join('\r\n')
+
+    const url = URL.createObjectURL(new Blob([contenido], { type: 'text/calendar;charset=utf-8' }))
+    const enlace = document.createElement('a')
+    enlace.href = url
+    enlace.download = `${concierto.value.artista.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.ics`
+    enlace.click()
+    URL.revokeObjectURL(url)
+}
+
 // Lógica del Mapa Leaflet
 // Leaflet es una librería para mostrar mapas interactivos
 // Necesito referencias a variables para controlar la instancia del mapa
@@ -199,6 +236,12 @@ function volverAtras() {
                         <i :class="['bi me-2', asistiendo ? 'bi-check-circle-fill' : 'bi-plus-circle']"
                             aria-hidden="true"></i>
                         {{ asistiendo ? 'Asistiré' : 'Me interesa' }}
+                    </button>
+                    <a v-if="concierto.web" :href="concierto.web" target="_blank" rel="noopener" class="btn btn-primary">
+                        <i class="bi bi-ticket-perforated me-2" aria-hidden="true"></i> Ver entradas
+                    </a>
+                    <button @click="agregarAlCalendario" class="btn btn-outline-light">
+                        <i class="bi bi-calendar-plus me-2" aria-hidden="true"></i> Agregar al calendario
                     </button>
                     <button @click="volverAtras" class="btn btn-secondary">
                         <i class="bi bi-arrow-left me-2" aria-hidden="true"></i> Volver al listado

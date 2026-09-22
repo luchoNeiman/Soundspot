@@ -1,5 +1,5 @@
 <script setup>
-const props = defineProps({
+defineProps({
     ubicacion: {
         type: Object, // Espera el objeto { lat, lng }
         required: true

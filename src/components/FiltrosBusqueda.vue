@@ -1,262 +1,193 @@
 <script setup>
-import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useConciertosStore } from '@/stores/conciertos.js'
 
 const storeConciertos = useConciertosStore()
-const ciudadInput = ref('') // Texto que escribe el usuario en el input
-const mostrarSugerencias = ref(false) // Controla si el dropdown está visible
-const mantenerDropdownAbierto = ref(false) // Evita cerrar el dropdown si el mouse está sobre él
-
-// Manejadores del dropdown de ciudades
-// Actualiza el filtro mientras el usuario escribe y muestra sugerencias
-function manejarInput() {
-    ciudad.value = ciudadInput.value
-    mostrarSugerencias.value = true
-}
-
-// Cuando el usuario selecciona una ciudad del dropdown
-// La guardo en el historial y cerramos el dropdown
-function seleccionarCiudad(sugerencia) {
-    ciudadInput.value = sugerencia
-    ciudad.value = sugerencia
-    mostrarSugerencias.value = false
-    // Guardar en el historial de búsquedas
-    storeConciertos.guardarBusquedaCiudad(sugerencia)
-}
-
-// Oculta el dropdown con un pequeño delay
-// Esto permite que el usuario pueda hacer clic en las opciones sin que se cierre
-function ocultarSugerencias() {
-    setTimeout(() => {
-        if (!mantenerDropdownAbierto.value) {
-            mostrarSugerencias.value = false
-        }
-    }, 150)
-}
-
-// obtengo la lista de ciudades disponibles desde el store
-const ciudadesDisponibles = computed(() => storeConciertos.ciudadesDisponibles)
-
-// calculo las sugerencias que mostrar en el dropdown
-// Si el usuario está escribiendo, filtro las ciudades disponibles
-// Si no escribe nada, muestro sus búsquedas recientes primero, luego todas las ciudades
-const sugerenciasCiudades = computed(() => {
-    const busqueda = ciudadInput.value.toLowerCase().trim()
-    if (!busqueda) {
-        // Mostrar recientes + disponibles sin duplicados
-        const recientes = storeConciertos.busquedasRecientes
-        const disponibles = ciudadesDisponibles.value
-        // Set elimina duplicados automáticamente
-        const todasLasCiudades = [...new Set([...recientes, ...disponibles])]
-        return todasLasCiudades
-    }
-    // Filtrar ciudades que contengan el texto de búsqueda
-    return ciudadesDisponibles.value.filter(ciudad =>
-        ciudad.toLowerCase().includes(busqueda)
-    )
-})
-
-// Detecto si estoy en un dispositivo pequeño (móvil o tablet)
-// 992px es el breakpoint de Bootstrap para pantallas "lg" (large)
-// Usamos esto para ajustar la visibilidad del texto del botón de ubicación
-const isMobileOrTablet = computed(() => windowWidth.value < 992)
-
-// Guardo el ancho actual de la ventana
-// Esto nos permite reaccionar a cambios de tamaño de pantalla
+const ciudadInput = ref('')
+const mostrarSugerencias = ref(false)
+const mantenerDropdownAbierto = ref(false)
 const windowWidth = ref(window.innerWidth)
 
-// Función que se ejecuta cuando el usuario redimensiona la ventana
-// Actualiza nuestro conocimiento del ancho para que computed funcione correctamente
-const updateWidth = () => {
-    windowWidth.value = window.innerWidth
-}
+const ciudad = defineModel('ciudad', { default: '' })
+const artista = defineModel('artista', { default: '' })
+const genero = defineModel('genero', { default: '' })
+const mes = defineModel('mes', { default: 0 })
+const anio = defineModel('anio', { default: 0 })
+const precioMin = defineModel('precioMin', { default: null })
+const precioMax = defineModel('precioMax', { default: null })
+const pais = defineModel('pais', { default: 'US' })
 
-// Agrego y remuevo el listener para detectar cambios de tamaño
-// onMounted: se ejecuta cuando el componente se carga
-// onUnmounted: se ejecuta cuando salimos del componente (cleanup)
-onMounted(() => {
-    window.addEventListener('resize', updateWidth)
-})
-
-onUnmounted(() => {
-    window.removeEventListener('resize', updateWidth)
-})
-
-// Defino los 'modelos' que este componente manejará.
-// 'defineModel' crea una prop reactiva y emite 'update:nombreModelo' automáticamente cuando el valor cambia internamente (gracias a v-model en los inputs).
-const ciudad = defineModel('ciudad') // Vinculado a v-model:ciudad en el padre
-const mes = defineModel('mes')   // Vinculado a v-model:mes
-const anio = defineModel('anio')  // Vinculado a v-model:fecha en el padre
-
-// Defino una prop normal para saber si se está buscando la ubicación
 const props = defineProps({
-    buscandoUbicacion: {
-        type: Boolean,
-        default: false
-    },
-    ubicacionActiva: {
-        type: Boolean,
-        default: false
-    }
+    buscandoUbicacion: { type: Boolean, default: false },
+    ubicacionActiva: { type: Boolean, default: false }
 })
 
-// Defino los eventos que este componente puede emitir hacia el padre.
 const emit = defineEmits(['buscarUbicacion'])
 
-// Función simple que solo emite el evento cuando se hace clic en el botón.
-// La lógica de geolocalización sigue estando en el componente padre (Inicio.vue).
-function solicitarUbicacion() {
-    emit('buscarUbicacion')
-}
+const paises = [
+    { valor: 'US', nombre: 'Estados Unidos' },
+    { valor: 'AR', nombre: 'Argentina' },
+    { valor: 'BR', nombre: 'Brasil' },
+    { valor: 'CA', nombre: 'Canadá' },
+    { valor: 'ES', nombre: 'España' },
+    { valor: 'GB', nombre: 'Reino Unido' },
+    { valor: 'MX', nombre: 'México' }
+]
 
-// Listas para los Dropdowns 
-const meses = computed(() => [
-    { valor: 0, nombre: 'Todos los Meses' },
-    { valor: 1, nombre: 'Enero' },
-    { valor: 2, nombre: 'Febrero' },
-    { valor: 3, nombre: 'Marzo' },
-    { valor: 4, nombre: 'Abril' },
-    { valor: 5, nombre: 'Mayo' },
-    { valor: 6, nombre: 'Junio' },
-    { valor: 7, nombre: 'Julio' },
-    { valor: 8, nombre: 'Agosto' },
-    { valor: 9, nombre: 'Septiembre' },
-    { valor: 10, nombre: 'Octubre' },
-    { valor: 11, nombre: 'Noviembre' },
-    { valor: 12, nombre: 'Diciembre' }
-])
+const meses = [
+    { valor: 0, nombre: 'Todos los meses' },
+    { valor: 1, nombre: 'Enero' }, { valor: 2, nombre: 'Febrero' }, { valor: 3, nombre: 'Marzo' },
+    { valor: 4, nombre: 'Abril' }, { valor: 5, nombre: 'Mayo' }, { valor: 6, nombre: 'Junio' },
+    { valor: 7, nombre: 'Julio' }, { valor: 8, nombre: 'Agosto' }, { valor: 9, nombre: 'Septiembre' },
+    { valor: 10, nombre: 'Octubre' }, { valor: 11, nombre: 'Noviembre' }, { valor: 12, nombre: 'Diciembre' }
+]
 
-// Se actualiza automáticamente al cambiar el año calendario.
 const anios = computed(() => {
     const anioActual = new Date().getFullYear()
-
     return [
-        { valor: 0, nombre: 'Todos los Años' },
+        { valor: 0, nombre: 'Todos los años' },
         { valor: anioActual - 1, nombre: String(anioActual - 1) },
         { valor: anioActual, nombre: String(anioActual) },
         { valor: anioActual + 1, nombre: String(anioActual + 1) }
     ]
 })
+
+const sugerenciasCiudades = computed(() => {
+    const busqueda = ciudadInput.value.toLowerCase().trim()
+    const disponibles = storeConciertos.ciudadesDisponibles
+    if (!busqueda) {
+        return [...new Set([...storeConciertos.busquedasRecientes, ...disponibles])]
+    }
+    return disponibles.filter((nombreCiudad) => nombreCiudad.toLowerCase().includes(busqueda))
+})
+
+const isMobileOrTablet = computed(() => windowWidth.value < 992)
+
+function manejarInput() {
+    ciudad.value = ciudadInput.value
+    mostrarSugerencias.value = true
+}
+
+function seleccionarCiudad(sugerencia) {
+    ciudadInput.value = sugerencia
+    ciudad.value = sugerencia
+    mostrarSugerencias.value = false
+    storeConciertos.guardarBusquedaCiudad(sugerencia)
+}
+
+function ocultarSugerencias() {
+    setTimeout(() => {
+        if (!mantenerDropdownAbierto.value) mostrarSugerencias.value = false
+    }, 150)
+}
+
+function restablecerFiltros() {
+    ciudadInput.value = ''
+    ciudad.value = ''
+    artista.value = ''
+    genero.value = ''
+    mes.value = 0
+    anio.value = 0
+    precioMin.value = null
+    precioMax.value = null
+}
+
+function actualizarAncho() {
+    windowWidth.value = window.innerWidth
+}
+
+onMounted(() => window.addEventListener('resize', actualizarAncho))
+onUnmounted(() => window.removeEventListener('resize', actualizarAncho))
 </script>
 
 <template>
-    <form @submit.prevent class="row g-3 mb-4 align-items-end" role="search">
-        <div class="col-md-4 col-sm-12">
+    <form class="row g-3 mb-4 align-items-end" role="search" @submit.prevent>
+        <div class="col-lg-2 col-md-4 col-sm-6">
+            <label for="filtroPais" class="form-label">País:</label>
+            <select id="filtroPais" v-model="pais" class="form-select" aria-label="Elegir país">
+                <option v-for="opcion in paises" :key="opcion.valor" :value="opcion.valor">{{ opcion.nombre }}</option>
+            </select>
+        </div>
+
+        <div class="col-lg-3 col-md-4 col-sm-6">
             <label for="filtroCiudad" class="form-label">Ciudad:</label>
             <div class="dropdown">
-                <input type="search" id="filtroCiudad" class="form-control border-light" v-model="ciudadInput"
-                    @input="manejarInput" @focus="mostrarSugerencias = true" @blur="ocultarSugerencias"
-                    placeholder="Buscar por ciudad..." autocomplete="off" aria-label="Filtrar conciertos por ciudad" />
-                <ul class="dropdown-menu w-100" :class="{ show: mostrarSugerencias && sugerenciasCiudades.length > 0 }"
+                <input id="filtroCiudad" v-model="ciudadInput" type="search" class="form-control border-light"
+                    placeholder="Buscar por ciudad..." autocomplete="off" aria-label="Filtrar por ciudad"
+                    @input="manejarInput" @focus="mostrarSugerencias = true" @blur="ocultarSugerencias">
+                <ul class="dropdown-menu w-100"
+                    :class="{ show: mostrarSugerencias && sugerenciasCiudades.length > 0 }"
                     @mouseenter="mantenerDropdownAbierto = true" @mouseleave="mantenerDropdownAbierto = false">
-                    <!-- Búsquedas recientes -->
                     <li v-if="!ciudadInput && storeConciertos.busquedasRecientes.length > 0" class="dropdown-header">
                         Búsquedas recientes
                     </li>
                     <li v-for="sugerencia in sugerenciasCiudades" :key="sugerencia">
-                        <button type="button" class="dropdown-item"
-                            :class="{ 'reciente': !ciudadInput && storeConciertos.busquedasRecientes.includes(sugerencia) }"
-                            @click="seleccionarCiudad(sugerencia)">
-                            <i v-if="!ciudadInput && storeConciertos.busquedasRecientes.includes(sugerencia)"
-                                class="bi bi-clock-history me-2"></i>
-                            {{ sugerencia }}
-                        </button>
+                        <button type="button" class="dropdown-item" @click="seleccionarCiudad(sugerencia)">{{ sugerencia }}</button>
                     </li>
                 </ul>
             </div>
         </div>
 
-        <div class="col-md-3 col-sm-6 text-white">
+        <div class="col-lg-3 col-md-4 col-sm-6">
+            <label for="filtroArtista" class="form-label">Artista:</label>
+            <input id="filtroArtista" v-model.trim="artista" type="search" class="form-control" placeholder="Nombre del artista">
+        </div>
+
+        <div class="col-lg-4 col-md-6 col-sm-6">
+            <label for="filtroGenero" class="form-label">Género:</label>
+            <select id="filtroGenero" v-model="genero" class="form-select" aria-label="Filtrar por género">
+                <option value="">Todos los géneros</option>
+                <option v-for="nombreGenero in storeConciertos.generosDisponibles" :key="nombreGenero" :value="nombreGenero">
+                    {{ nombreGenero }}
+                </option>
+            </select>
+        </div>
+
+        <div class="col-lg-2 col-md-3 col-sm-6">
             <label for="filtroMes" class="form-label">Mes:</label>
-            <select id="filtroMes" class="form-select" v-model.number="mes" aria-label="Filtrar por mes">
-                <option v-for="m in meses" :key="m.valor" :value="m.valor">{{ m.nombre }}</option>
+            <select id="filtroMes" v-model.number="mes" class="form-select" aria-label="Filtrar por mes">
+                <option v-for="opcion in meses" :key="opcion.valor" :value="opcion.valor">{{ opcion.nombre }}</option>
             </select>
         </div>
 
-        <div class="col-md-2 col-sm-6">
+        <div class="col-lg-2 col-md-3 col-sm-6">
             <label for="filtroAnio" class="form-label">Año:</label>
-            <select id="filtroAnio" class="form-select" v-model.number="anio" aria-label="Filtrar por año">
-                <option v-for="a in anios" :key="a.valor" :value="a.valor">{{ a.nombre }}</option>
+            <select id="filtroAnio" v-model.number="anio" class="form-select" aria-label="Filtrar por año">
+                <option v-for="opcion in anios" :key="opcion.valor" :value="opcion.valor">{{ opcion.nombre }}</option>
             </select>
         </div>
 
-        <div class="col-md-3 col-sm-12">
-            <label class="form-label d-none d-md-block">&nbsp;</label> <button @click="solicitarUbicacion"
-                class="btn btn-outline-light w-100" :disabled="props.buscandoUbicacion">
-                <span v-if="props.buscandoUbicacion" class="spinner-border spinner-border-sm me-1" role="status"
-                    aria-hidden="true"></span>
-                <i v-else :class="[
-                    'bi',
-                    props.ubicacionActiva ? 'bi-geo-alt-fill' : 'bi-geo-alt',
-                    { 'me-1': !isMobileOrTablet }
-                ]"></i>
-                <span :class="{ 'd-none': isMobileOrTablet }">
-                    {{ props.buscandoUbicacion ? 'Buscando...' :
-                        props.ubicacionActiva ? 'Quitar ubicación' : 'Usar mi ubicación' }}
-                </span>
+        <div class="col-lg-2 col-md-3 col-sm-6">
+            <label for="filtroPrecioMin" class="form-label">Precio desde:</label>
+            <input id="filtroPrecioMin" v-model.number="precioMin" type="number" min="0" class="form-control" placeholder="Sin mínimo">
+        </div>
+
+        <div class="col-lg-2 col-md-3 col-sm-6">
+            <label for="filtroPrecioMax" class="form-label">Precio hasta:</label>
+            <input id="filtroPrecioMax" v-model.number="precioMax" type="number" min="0" class="form-control" placeholder="Sin máximo">
+        </div>
+
+        <div class="col-lg-2 col-md-6 col-sm-6 d-grid">
+            <button type="button" class="btn btn-outline-secondary" @click="restablecerFiltros">
+                <i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i> Limpiar
+            </button>
+        </div>
+
+        <div class="col-lg-2 col-md-6 col-sm-6 d-grid">
+            <button type="button" class="btn btn-outline-light" :disabled="props.buscandoUbicacion" @click="emit('buscarUbicacion')">
+                <span v-if="props.buscandoUbicacion" class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+                <i v-else :class="['bi', props.ubicacionActiva ? 'bi-geo-alt-fill' : 'bi-geo-alt', { 'me-1': !isMobileOrTablet }]" aria-hidden="true"></i>
+                <span :class="{ 'd-none': isMobileOrTablet }">{{ props.ubicacionActiva ? 'Quitar ubicación' : 'Usar mi ubicación' }}</span>
             </button>
         </div>
     </form>
 </template>
 
 <style scoped>
-.form-select {
-    background-color: var(--bs-form-control-bg);
-    color: var(--bs-form-control-color);
-    border-color: var(--bs-form-control-border-color);
-}
-
-.btn:disabled {
-    cursor: wait;
-}
-
-@media (max-width: 991.98px) {
-    .btn i.bi {
-        font-size: 1.2rem;
-        margin: 0;
-    }
-
-    .btn {
-        padding: 0.375rem 1rem;
-    }
-}
-
-/* Estilos para el dropdown de ciudades */
-.dropdown {
-    position: relative;
-}
-
-.dropdown-menu {
-    max-height: 200px;
-    overflow-y: auto;
-    margin-top: 0.25rem;
-    background-color: var(--bs-form-control-bg);
-    border-color: var(--bs-form-control-border-color);
-}
-
-.dropdown-item {
-    color: var(--bs-form-control-color);
-    padding: 0.5rem 1rem;
-}
-
-.dropdown-item:hover,
-.dropdown-item:focus {
-    background-color: var(--color-primario);
-    color: var(--bs-light);
-}
-
-.dropdown-header {
-    color: var(--color-secundario);
-    font-weight: 500;
-    padding: 0.5rem 1rem;
-    font-size: 0.875rem;
-}
-
-.dropdown-item.reciente {
-    color: var(--color-secundario);
-}
-
-.dropdown-item.reciente:hover {
-    color: var(--bs-light);
-}
+.btn:disabled { cursor: wait; }
+.dropdown { position: relative; }
+.dropdown-menu { max-height: 200px; overflow-y: auto; margin-top: 0.25rem; background-color: var(--bs-form-control-bg); border-color: var(--bs-form-control-border-color); }
+.dropdown-item { color: var(--bs-form-control-color); }
+.dropdown-item:hover, .dropdown-item:focus { background-color: var(--color-primario); color: var(--bs-light); }
+.dropdown-header { color: var(--color-secundario); }
 </style>

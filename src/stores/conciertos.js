@@ -18,6 +18,8 @@ function transformarDatosApi(evento) {
     lugar: venue?.name || 'Lugar a confirmar',
     ciudad: venue?.city?.name || 'Ciudad no disponible',
     fecha: evento.dates?.start?.localDate || 'Fecha a confirmar',
+    genero: evento.classifications?.[0]?.genre?.name || 'Sin género definido',
+    web: evento.url || null,
     precio: {
       min: precioRango?.min,
       max: precioRango?.max,
@@ -30,10 +32,10 @@ function transformarDatosApi(evento) {
   }
 }
 
-function crearUrlEventos(anio, pagina, tamanioPagina) {
+function crearUrlEventos(anio, pagina, tamanioPagina, pais) {
   const parametros = new URLSearchParams({
     apikey: API_KEY,
-    countryCode: 'US',
+    countryCode: pais,
     classificationName: 'music',
     startDateTime: `${anio}-01-01T00:00:00Z`,
     endDateTime: `${anio}-12-31T23:59:59Z`,
@@ -53,8 +55,10 @@ export const useConciertosStore = defineStore('conciertos', () => {
   const estaCargando = ref(false)
   const errorApi = ref(null)
   const resultadosLimitados = ref(false)
+  const paisConsultado = ref('US')
   const eventosUsuario = ref(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'))
   const busquedasRecientes = ref(JSON.parse(localStorage.getItem(STORAGE_KEY_BUSQUEDAS) || '[]'))
+  let controladorConsulta = null
 
   watch(eventosUsuario, (nuevosEventos) => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(nuevosEventos))
@@ -65,13 +69,22 @@ export const useConciertosStore = defineStore('conciertos', () => {
     const ciudades = new Set(conciertos.value.map((concierto) => concierto.ciudad))
     return Array.from(ciudades).sort()
   })
+  const generosDisponibles = computed(() => {
+    const generos = new Set(conciertos.value.map((concierto) => concierto.genero))
+    return Array.from(generos).sort()
+  })
 
-  async function buscarConciertos() {
-    if (conciertos.value.length > 0) return
+  async function buscarConciertos(pais = paisConsultado.value, forzar = false) {
+    if (!forzar && conciertos.value.length > 0 && pais === paisConsultado.value) return
 
+    controladorConsulta?.abort()
+    const controladorActual = new AbortController()
+    controladorConsulta = controladorActual
     estaCargando.value = true
     errorApi.value = null
     resultadosLimitados.value = false
+    paisConsultado.value = pais
+    conciertos.value = []
 
     try {
       const anioActual = new Date().getFullYear()
@@ -90,7 +103,9 @@ export const useConciertosStore = defineStore('conciertos', () => {
 
         while (pagina < totalPaginas && eventosDelAnio.length < limiteParaAnio) {
           const restantes = limiteParaAnio - eventosDelAnio.length
-          const respuesta = await fetch(crearUrlEventos(anio, pagina, restantes))
+          const respuesta = await fetch(crearUrlEventos(anio, pagina, restantes, pais), {
+            signal: controladorActual.signal
+          })
 
           if (!respuesta.ok) {
             throw new Error(`Error ${respuesta.status}: No se pudo conectar con la API.`)
@@ -121,10 +136,11 @@ export const useConciertosStore = defineStore('conciertos', () => {
 
       resultadosLimitados.value = totalDisponible > conciertos.value.length
     } catch (error) {
+      if (error.name === 'AbortError') return
       console.error('Error al buscar conciertos:', error)
       errorApi.value = error.message
     } finally {
-      estaCargando.value = false
+      if (controladorConsulta === controladorActual) estaCargando.value = false
     }
   }
 
@@ -155,9 +171,11 @@ export const useConciertosStore = defineStore('conciertos', () => {
     estaCargando,
     errorApi,
     resultadosLimitados,
+    paisConsultado,
     eventosUsuario,
     conteoAsistire,
     ciudadesDisponibles,
+    generosDisponibles,
     busquedasRecientes,
     buscarConciertos,
     alternarAsistencia,

@@ -1,6 +1,10 @@
 <script setup>
 import { RouterLink } from 'vue-router'
 import { useConciertosStore } from '@/stores/conciertos.js'
+
+defineOptions({ name: 'AppHeader' })
+
+const storeConciertos = useConciertosStore()
 </script>
 
 <template>
@@ -26,8 +30,8 @@ import { useConciertosStore } from '@/stores/conciertos.js'
                         <RouterLink class="nav-link px-lg-3 py-lg-4" active-class="active"
                             :to="{ name: 'mis-eventos' }">
                             <i class="bi bi-calendar-check-fill me-1 d-lg-none" aria-hidden="true"></i> Mis Eventos
-                            <span v-if="useConciertosStore.conteoAsistire > 0"
-                                class="badge rounded-pill text-bg-secondary ms-1">{{ useConciertosStore.conteoAsistire
+                            <span v-if="storeConciertos.conteoAsistire > 0"
+                                class="badge rounded-pill text-bg-secondary ms-1">{{ storeConciertos.conteoAsistire
                                 }}</span>
                         </RouterLink>
                     </li>

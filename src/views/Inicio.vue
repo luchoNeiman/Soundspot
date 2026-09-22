@@ -1,15 +1,23 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useConciertosStore } from '@/stores/conciertos.js'
 import CardConcierto from '@/components/CardConcierto.vue'
 import FiltrosBusqueda from '@/components/FiltrosBusqueda.vue'
 import TarjetaUbicacion from '@/components/TarjetaUbicacion.vue'
 
+defineOptions({ name: 'VistaInicio' })
+
 const storeConciertos = useConciertosStore()
 
 const filtroCiudad = ref('')
+const filtroArtista = ref('')
+const filtroGenero = ref('')
 const filtroMes = ref(0) // 0 = Todos los Meses
 const filtroAnio = ref(0) // 0 = Todos los Años
+const filtroPrecioMin = ref(null)
+const filtroPrecioMax = ref(null)
+const filtroPais = ref('US')
+const cantidadVisible = ref(12)
 
 const ubicacionUsuario = ref(null)
 const errorGeolocalizacion = ref(null)
@@ -18,7 +26,15 @@ const buscandoUbicacion = ref(false)
 // Lógica de Conciertos (API)
 // Uso onMounted para llamar a la API solo una vez, cuando el componente se carga
 onMounted(() => {
-    storeConciertos.buscarConciertos()
+    storeConciertos.buscarConciertos(filtroPais.value)
+})
+
+watch(filtroPais, (pais) => {
+    storeConciertos.buscarConciertos(pais, true)
+})
+
+watch([filtroCiudad, filtroArtista, filtroGenero, filtroMes, filtroAnio, filtroPrecioMin, filtroPrecioMax, filtroPais], () => {
+    cantidadVisible.value = 12
 })
 
 // Accedeo a los estados de carga y error del store
@@ -64,6 +80,15 @@ const conciertosFiltrados = computed(() => {
         );
     }
 
+    const artistaLower = filtroArtista.value.toLowerCase().trim();
+    if (artistaLower) {
+        resultado = resultado.filter(c => c.artista.toLowerCase().includes(artistaLower));
+    }
+
+    if (filtroGenero.value) {
+        resultado = resultado.filter(c => c.genero === filtroGenero.value);
+    }
+
     // Filtrar por Año
     if (filtroAnio.value > 0) {
         resultado = resultado.filter(c => obtenerPartesFecha(c.fecha).anio === filtroAnio.value);
@@ -72,6 +97,19 @@ const conciertosFiltrados = computed(() => {
     // Filtrar por Mes
     if (filtroMes.value > 0) {
         resultado = resultado.filter(c => obtenerPartesFecha(c.fecha).mes === filtroMes.value);
+    }
+
+    const tienePrecioMinimo = filtroPrecioMin.value !== null && filtroPrecioMin.value !== '';
+    const tienePrecioMaximo = filtroPrecioMax.value !== null && filtroPrecioMax.value !== '';
+    if (tienePrecioMinimo || tienePrecioMaximo) {
+        resultado = resultado.filter(c => {
+            if (!c.precio.disponible) return false;
+
+            const menorPrecio = c.precio.min ?? c.precio.max;
+            const mayorPrecio = c.precio.max ?? c.precio.min;
+            return (!tienePrecioMinimo || mayorPrecio >= filtroPrecioMin.value) &&
+                (!tienePrecioMaximo || menorPrecio <= filtroPrecioMax.value);
+        });
     }
 
     // ORDENACIÓN POR CERCANÍA (si tengo ubicación del usuario)
@@ -102,6 +140,13 @@ const conciertosFiltrados = computed(() => {
 
     return resultado;
 });
+
+const conciertosVisibles = computed(() => conciertosFiltrados.value.slice(0, cantidadVisible.value))
+const hayMasConciertos = computed(() => cantidadVisible.value < conciertosFiltrados.value.length)
+
+function cargarMasConciertos() {
+    cantidadVisible.value += 12
+}
 
 function obtenerUbicacion() {
     // Si ya hay una ubicación activa, la desactivamos
@@ -154,7 +199,9 @@ function obtenerUbicacion() {
     <section class="vista-inicio mb-5">
         <h1 class="mb-4">Próximos Conciertos</h1>
 
-        <FiltrosBusqueda v-model:ciudad="filtroCiudad" v-model:mes="filtroMes" v-model:anio="filtroAnio"
+        <FiltrosBusqueda v-model:ciudad="filtroCiudad" v-model:artista="filtroArtista" v-model:genero="filtroGenero"
+            v-model:mes="filtroMes" v-model:anio="filtroAnio" v-model:precio-min="filtroPrecioMin"
+            v-model:precio-max="filtroPrecioMax" v-model:pais="filtroPais"
             :buscando-ubicacion="buscandoUbicacion" :ubicacion-activa="!!ubicacionUsuario"
             @buscar-ubicacion="obtenerUbicacion" />
 
@@ -187,10 +234,15 @@ function obtenerUbicacion() {
                     Se encontraron más funciones de las que se pueden mostrar con fluidez. Se cargaron hasta 170, repartidas entre los tres años disponibles.
                 </div>
                 <div v-if="conciertosFiltrados.length > 0" class="row g-4">
-                    <div v-for="concierto in conciertosFiltrados" :key="concierto.id"
+                    <div v-for="concierto in conciertosVisibles" :key="concierto.id"
                         class="col-md-6 col-lg-4 d-flex align-items-stretch">
                         <CardConcierto :concierto="concierto" />
                     </div>
+                </div>
+                <div v-if="hayMasConciertos" class="text-center mt-4">
+                    <button type="button" class="btn btn-outline-light" @click="cargarMasConciertos">
+                        Cargar más funciones
+                    </button>
                 </div>
                 <div v-else class="alert alert-secondary text-center mt-4" role="status">
                     <p class="mb-0">No se encontraron conciertos que coincidan con tu búsqueda.</p>
