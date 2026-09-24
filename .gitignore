@@ -14,6 +14,11 @@ dist-ssr
 coverage
 *.local
 
+# Variables de entorno con datos sensibles (ver .env.example)
+.env
+.env.*
+!.env.example
+
 /cypress/videos/
 /cypress/screenshots/
 

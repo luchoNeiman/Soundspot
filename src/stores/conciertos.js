@@ -1,7 +1,9 @@
 import { computed, ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 
-const API_KEY = '5TjrtE9vOIGvZPpAZFvhODr9pyZcivHD'
+// La clave se lee de una variable de entorno (ver .env.example) para no
+// dejarla escrita en el código fuente ni en el historial de git.
+const API_KEY = import.meta.env.VITE_TM_API_KEY
 const API_URL = 'https://app.ticketmaster.com/discovery/v2/events.json'
 const LIMITE_SEGURIDAD = 170
 
@@ -35,7 +37,6 @@ function transformarDatosApi(evento) {
 function crearUrlEventos(anio, pagina, tamanioPagina, pais) {
   const parametros = new URLSearchParams({
     apikey: API_KEY,
-    countryCode: pais,
     classificationName: 'music',
     startDateTime: `${anio}-01-01T00:00:00Z`,
     endDateTime: `${anio}-12-31T23:59:59Z`,
@@ -44,12 +45,15 @@ function crearUrlEventos(anio, pagina, tamanioPagina, pais) {
     size: String(tamanioPagina)
   })
 
+  // Si no se eligió un país puntual ("Todos los países"), se omite el
+  // parámetro para que la API busque en todo el mundo.
+  if (pais) parametros.set('countryCode', pais)
+
   return `${API_URL}?${parametros.toString()}`
 }
 
 export const useConciertosStore = defineStore('conciertos', () => {
   const STORAGE_KEY = 'soundspot-eventos-usuario'
-  const STORAGE_KEY_BUSQUEDAS = 'soundspot-busquedas-recientes'
 
   const conciertos = ref([])
   const estaCargando = ref(false)
@@ -57,7 +61,6 @@ export const useConciertosStore = defineStore('conciertos', () => {
   const resultadosLimitados = ref(false)
   const paisConsultado = ref('US')
   const eventosUsuario = ref(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'))
-  const busquedasRecientes = ref(JSON.parse(localStorage.getItem(STORAGE_KEY_BUSQUEDAS) || '[]'))
   let controladorConsulta = null
 
   watch(eventosUsuario, (nuevosEventos) => {
@@ -73,9 +76,18 @@ export const useConciertosStore = defineStore('conciertos', () => {
     const generos = new Set(conciertos.value.map((concierto) => concierto.genero))
     return Array.from(generos).sort()
   })
+  const artistasDisponibles = computed(() => {
+    const artistas = new Set(conciertos.value.map((concierto) => concierto.artista))
+    return Array.from(artistas).sort()
+  })
 
   async function buscarConciertos(pais = paisConsultado.value, forzar = false) {
     if (!forzar && conciertos.value.length > 0 && pais === paisConsultado.value) return
+
+    if (!API_KEY) {
+      errorApi.value = 'Falta configurar la clave de la API de Ticketmaster. Creá un archivo .env.local con VITE_TM_API_KEY (ver .env.example).'
+      return
+    }
 
     controladorConsulta?.abort()
     const controladorActual = new AbortController()
@@ -154,18 +166,6 @@ export const useConciertosStore = defineStore('conciertos', () => {
     return eventosUsuario.value.includes(conciertoId)
   }
 
-  function guardarBusquedaCiudad(ciudad) {
-    if (!ciudad) return
-
-    const busquedas = busquedasRecientes.value
-    const indice = busquedas.indexOf(ciudad)
-    if (indice > -1) busquedas.splice(indice, 1)
-
-    busquedas.unshift(ciudad)
-    busquedasRecientes.value = busquedas.slice(0, 5)
-    localStorage.setItem(STORAGE_KEY_BUSQUEDAS, JSON.stringify(busquedasRecientes.value))
-  }
-
   return {
     conciertos,
     estaCargando,
@@ -176,10 +176,9 @@ export const useConciertosStore = defineStore('conciertos', () => {
     conteoAsistire,
     ciudadesDisponibles,
     generosDisponibles,
-    busquedasRecientes,
+    artistasDisponibles,
     buscarConciertos,
     alternarAsistencia,
-    vaAAsistir,
-    guardarBusquedaCiudad
+    vaAAsistir
   }
 })

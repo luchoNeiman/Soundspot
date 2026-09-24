@@ -3,9 +3,6 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useConciertosStore } from '@/stores/conciertos.js'
 
 const storeConciertos = useConciertosStore()
-const ciudadInput = ref('')
-const mostrarSugerencias = ref(false)
-const mantenerDropdownAbierto = ref(false)
 const windowWidth = ref(window.innerWidth)
 
 const ciudad = defineModel('ciudad', { default: '' })
@@ -25,6 +22,7 @@ const props = defineProps({
 const emit = defineEmits(['buscarUbicacion'])
 
 const paises = [
+    { valor: '', nombre: 'Todos los países' },
     { valor: 'US', nombre: 'Estados Unidos' },
     { valor: 'AR', nombre: 'Argentina' },
     { valor: 'BR', nombre: 'Brasil' },
@@ -52,37 +50,14 @@ const anios = computed(() => {
     ]
 })
 
-const sugerenciasCiudades = computed(() => {
-    const busqueda = ciudadInput.value.toLowerCase().trim()
-    const disponibles = storeConciertos.ciudadesDisponibles
-    if (!busqueda) {
-        return [...new Set([...storeConciertos.busquedasRecientes, ...disponibles])]
-    }
-    return disponibles.filter((nombreCiudad) => nombreCiudad.toLowerCase().includes(busqueda))
-})
-
 const isMobileOrTablet = computed(() => windowWidth.value < 992)
 
-function manejarInput() {
-    ciudad.value = ciudadInput.value
-    mostrarSugerencias.value = true
-}
-
-function seleccionarCiudad(sugerencia) {
-    ciudadInput.value = sugerencia
-    ciudad.value = sugerencia
-    mostrarSugerencias.value = false
-    storeConciertos.guardarBusquedaCiudad(sugerencia)
-}
-
-function ocultarSugerencias() {
-    setTimeout(() => {
-        if (!mantenerDropdownAbierto.value) mostrarSugerencias.value = false
-    }, 150)
-}
+// Mientras se están cargando los conciertos del país elegido, las listas de
+// ciudades/artistas/géneros pueden estar vacías o desactualizadas: deshabilito
+// esos selects para que no se puedan elegir valores que todavía no cargaron.
+const filtrosDependientesDeshabilitados = computed(() => storeConciertos.estaCargando)
 
 function restablecerFiltros() {
-    ciudadInput.value = ''
     ciudad.value = ''
     artista.value = ''
     genero.value = ''
@@ -102,70 +77,73 @@ onUnmounted(() => window.removeEventListener('resize', actualizarAncho))
 
 <template>
     <form class="row g-3 mb-4 align-items-end" role="search" @submit.prevent>
-        <div class="col-lg-2 col-md-4 col-sm-6">
-            <label for="filtroPais" class="form-label">País:</label>
-            <select id="filtroPais" v-model="pais" class="form-select" aria-label="Elegir país">
-                <option v-for="opcion in paises" :key="opcion.valor" :value="opcion.valor">{{ opcion.nombre }}</option>
-            </select>
-        </div>
+        <fieldset class="row g-3 flex-grow-1">
+            <legend class="visually-hidden">Filtros de búsqueda de conciertos</legend>
 
-        <div class="col-lg-3 col-md-4 col-sm-6">
-            <label for="filtroCiudad" class="form-label">Ciudad:</label>
-            <div class="dropdown">
-                <input id="filtroCiudad" v-model="ciudadInput" type="search" class="form-control border-light"
-                    placeholder="Buscar por ciudad..." autocomplete="off" aria-label="Filtrar por ciudad"
-                    @input="manejarInput" @focus="mostrarSugerencias = true" @blur="ocultarSugerencias">
-                <ul class="dropdown-menu w-100"
-                    :class="{ show: mostrarSugerencias && sugerenciasCiudades.length > 0 }"
-                    @mouseenter="mantenerDropdownAbierto = true" @mouseleave="mantenerDropdownAbierto = false">
-                    <li v-if="!ciudadInput && storeConciertos.busquedasRecientes.length > 0" class="dropdown-header">
-                        Búsquedas recientes
-                    </li>
-                    <li v-for="sugerencia in sugerenciasCiudades" :key="sugerencia">
-                        <button type="button" class="dropdown-item" @click="seleccionarCiudad(sugerencia)">{{ sugerencia }}</button>
-                    </li>
-                </ul>
+            <div class="col-lg-2 col-md-4 col-sm-6">
+                <label for="filtroPais" class="form-label">País:</label>
+                <select id="filtroPais" v-model="pais" class="form-select" aria-label="Filtrar por país">
+                    <option v-for="opcion in paises" :key="opcion.valor" :value="opcion.valor">{{ opcion.nombre }}</option>
+                </select>
             </div>
-        </div>
 
-        <div class="col-lg-3 col-md-4 col-sm-6">
-            <label for="filtroArtista" class="form-label">Artista:</label>
-            <input id="filtroArtista" v-model.trim="artista" type="search" class="form-control" placeholder="Nombre del artista">
-        </div>
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <label for="filtroCiudad" class="form-label">Ciudad:</label>
+                <select id="filtroCiudad" v-model="ciudad" class="form-select"
+                    aria-label="Filtrar por ciudad" :disabled="filtrosDependientesDeshabilitados">
+                    <option value="">Todas las ciudades</option>
+                    <option v-for="nombreCiudad in storeConciertos.ciudadesDisponibles" :key="nombreCiudad" :value="nombreCiudad">
+                        {{ nombreCiudad }}
+                    </option>
+                </select>
+            </div>
 
-        <div class="col-lg-4 col-md-6 col-sm-6">
-            <label for="filtroGenero" class="form-label">Género:</label>
-            <select id="filtroGenero" v-model="genero" class="form-select" aria-label="Filtrar por género">
-                <option value="">Todos los géneros</option>
-                <option v-for="nombreGenero in storeConciertos.generosDisponibles" :key="nombreGenero" :value="nombreGenero">
-                    {{ nombreGenero }}
-                </option>
-            </select>
-        </div>
+            <div class="col-lg-3 col-md-4 col-sm-6">
+                <label for="filtroArtista" class="form-label">Artista:</label>
+                <select id="filtroArtista" v-model="artista" class="form-select"
+                    aria-label="Filtrar por artista" :disabled="filtrosDependientesDeshabilitados">
+                    <option value="">Todos los artistas</option>
+                    <option v-for="nombreArtista in storeConciertos.artistasDisponibles" :key="nombreArtista" :value="nombreArtista">
+                        {{ nombreArtista }}
+                    </option>
+                </select>
+            </div>
 
-        <div class="col-lg-2 col-md-3 col-sm-6">
-            <label for="filtroMes" class="form-label">Mes:</label>
-            <select id="filtroMes" v-model.number="mes" class="form-select" aria-label="Filtrar por mes">
-                <option v-for="opcion in meses" :key="opcion.valor" :value="opcion.valor">{{ opcion.nombre }}</option>
-            </select>
-        </div>
+            <div class="col-lg-4 col-md-6 col-sm-6">
+                <label for="filtroGenero" class="form-label">Género:</label>
+                <select id="filtroGenero" v-model="genero" class="form-select"
+                    aria-label="Filtrar por género" :disabled="filtrosDependientesDeshabilitados">
+                    <option value="">Todos los géneros</option>
+                    <option v-for="nombreGenero in storeConciertos.generosDisponibles" :key="nombreGenero" :value="nombreGenero">
+                        {{ nombreGenero }}
+                    </option>
+                </select>
+            </div>
 
-        <div class="col-lg-2 col-md-3 col-sm-6">
-            <label for="filtroAnio" class="form-label">Año:</label>
-            <select id="filtroAnio" v-model.number="anio" class="form-select" aria-label="Filtrar por año">
-                <option v-for="opcion in anios" :key="opcion.valor" :value="opcion.valor">{{ opcion.nombre }}</option>
-            </select>
-        </div>
+            <div class="col-lg-2 col-md-3 col-sm-6">
+                <label for="filtroMes" class="form-label">Mes:</label>
+                <select id="filtroMes" v-model.number="mes" class="form-select" aria-label="Filtrar por mes">
+                    <option v-for="opcion in meses" :key="opcion.valor" :value="opcion.valor">{{ opcion.nombre }}</option>
+                </select>
+            </div>
 
-        <div class="col-lg-2 col-md-3 col-sm-6">
-            <label for="filtroPrecioMin" class="form-label">Precio desde:</label>
-            <input id="filtroPrecioMin" v-model.number="precioMin" type="number" min="0" class="form-control" placeholder="Sin mínimo">
-        </div>
+            <div class="col-lg-2 col-md-3 col-sm-6">
+                <label for="filtroAnio" class="form-label">Año:</label>
+                <select id="filtroAnio" v-model.number="anio" class="form-select" aria-label="Filtrar por año">
+                    <option v-for="opcion in anios" :key="opcion.valor" :value="opcion.valor">{{ opcion.nombre }}</option>
+                </select>
+            </div>
 
-        <div class="col-lg-2 col-md-3 col-sm-6">
-            <label for="filtroPrecioMax" class="form-label">Precio hasta:</label>
-            <input id="filtroPrecioMax" v-model.number="precioMax" type="number" min="0" class="form-control" placeholder="Sin máximo">
-        </div>
+            <div class="col-lg-2 col-md-3 col-sm-6">
+                <label for="filtroPrecioMin" class="form-label">Precio desde:</label>
+                <input id="filtroPrecioMin" v-model.number="precioMin" type="number" min="0" class="form-control" placeholder="Sin mínimo">
+            </div>
+
+            <div class="col-lg-2 col-md-3 col-sm-6">
+                <label for="filtroPrecioMax" class="form-label">Precio hasta:</label>
+                <input id="filtroPrecioMax" v-model.number="precioMax" type="number" min="0" class="form-control" placeholder="Sin máximo">
+            </div>
+        </fieldset>
 
         <div class="col-lg-2 col-md-6 col-sm-6 d-grid">
             <button type="button" class="btn btn-outline-secondary" @click="restablecerFiltros">
@@ -185,9 +163,13 @@ onUnmounted(() => window.removeEventListener('resize', actualizarAncho))
 
 <style scoped>
 .btn:disabled { cursor: wait; }
-.dropdown { position: relative; }
-.dropdown-menu { max-height: 200px; overflow-y: auto; margin-top: 0.25rem; background-color: var(--bs-form-control-bg); border-color: var(--bs-form-control-border-color); }
-.dropdown-item { color: var(--bs-form-control-color); }
-.dropdown-item:hover, .dropdown-item:focus { background-color: var(--color-primario); color: var(--bs-light); }
-.dropdown-header { color: var(--color-secundario); }
+
+/* Reseteo los estilos por defecto del navegador para que el fieldset
+   no rompa el sistema de grillas de Bootstrap (row/col). */
+fieldset {
+    border: 0;
+    margin: 0;
+    padding: 0;
+    min-width: 0;
+}
 </style>

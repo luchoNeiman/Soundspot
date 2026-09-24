@@ -30,6 +30,12 @@ onMounted(() => {
 })
 
 watch(filtroPais, (pais) => {
+    // Ciudad, artista y género dependen de los conciertos ya cargados para
+    // el país elegido: si cambio de país, esas listas cambian y cualquier
+    // valor previamente seleccionado podría dejar de existir.
+    filtroCiudad.value = ''
+    filtroArtista.value = ''
+    filtroGenero.value = ''
     storeConciertos.buscarConciertos(pais, true)
 })
 
@@ -72,17 +78,14 @@ function getDistanciaHaversine(lat1, lon1, lat2, lon2) {
 const conciertosFiltrados = computed(() => {
     let resultado = storeConciertos.conciertos;
 
-    // Filtrar por Ciudad
-    const ciudadLower = filtroCiudad.value.toLowerCase().trim();
-    if (ciudadLower) {
-        resultado = resultado.filter(c =>
-            c.ciudad.toLowerCase().includes(ciudadLower)
-        );
+    // Ciudad y artista se eligen de un select con las opciones ya cargadas,
+    // así que alcanza con comparar por igualdad exacta.
+    if (filtroCiudad.value) {
+        resultado = resultado.filter(c => c.ciudad === filtroCiudad.value);
     }
 
-    const artistaLower = filtroArtista.value.toLowerCase().trim();
-    if (artistaLower) {
-        resultado = resultado.filter(c => c.artista.toLowerCase().includes(artistaLower));
+    if (filtroArtista.value) {
+        resultado = resultado.filter(c => c.artista === filtroArtista.value);
     }
 
     if (filtroGenero.value) {
@@ -230,6 +233,10 @@ function obtenerUbicacion() {
             </div>
 
             <div v-else>
+                <p class="text-body-secondary small mb-3" role="status" aria-live="polite">
+                    {{ conciertosFiltrados.length }} concierto{{ conciertosFiltrados.length === 1 ? '' : 's' }} encontrado{{ conciertosFiltrados.length === 1 ? '' : 's' }}
+                </p>
+
                 <div v-if="resultadosLimitados" class="alert alert-info" role="status">
                     Se encontraron más funciones de las que se pueden mostrar con fluidez. Se cargaron hasta 170, repartidas entre los tres años disponibles.
                 </div>
@@ -244,7 +251,7 @@ function obtenerUbicacion() {
                         Cargar más funciones
                     </button>
                 </div>
-                <div v-else class="alert alert-secondary text-center mt-4" role="status">
+                <div v-else-if="conciertosFiltrados.length === 0" class="alert alert-secondary text-center mt-4" role="status">
                     <p class="mb-0">No se encontraron conciertos que coincidan con tu búsqueda.</p>
                 </div>
             </div>
