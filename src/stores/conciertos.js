@@ -1,10 +1,10 @@
 import { computed, ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 
-// La clave se lee de una variable de entorno (ver .env.example) para no
-// dejarla escrita en el código fuente ni en el historial de git.
-const API_KEY = import.meta.env.VITE_TM_API_KEY
-const API_URL = 'https://app.ticketmaster.com/discovery/v2/events.json'
+// La búsqueda no le pega directo a Ticketmaster: pasa por /api/eventos
+// (función serverless de Vercel) para que la API key quede del lado del
+// servidor y nunca viaje al navegador. Ver /api/eventos.js.
+const API_URL = '/api/eventos'
 const LIMITE_SEGURIDAD = 170
 
 function transformarDatosApi(evento) {
@@ -36,11 +36,8 @@ function transformarDatosApi(evento) {
 
 function crearUrlEventos(anio, pagina, tamanioPagina, pais) {
   const parametros = new URLSearchParams({
-    apikey: API_KEY,
-    classificationName: 'music',
     startDateTime: `${anio}-01-01T00:00:00Z`,
     endDateTime: `${anio}-12-31T23:59:59Z`,
-    sort: 'date,asc',
     page: String(pagina),
     size: String(tamanioPagina)
   })
@@ -84,11 +81,6 @@ export const useConciertosStore = defineStore('conciertos', () => {
   async function buscarConciertos(pais = paisConsultado.value, forzar = false) {
     if (!forzar && conciertos.value.length > 0 && pais === paisConsultado.value) return
 
-    if (!API_KEY) {
-      errorApi.value = 'Falta configurar la clave de la API de Ticketmaster. Creá un archivo .env.local con VITE_TM_API_KEY (ver .env.example).'
-      return
-    }
-
     controladorConsulta?.abort()
     const controladorActual = new AbortController()
     controladorConsulta = controladorActual
@@ -120,7 +112,8 @@ export const useConciertosStore = defineStore('conciertos', () => {
           })
 
           if (!respuesta.ok) {
-            throw new Error(`Error ${respuesta.status}: No se pudo conectar con la API.`)
+            const cuerpoError = await respuesta.json().catch(() => null)
+            throw new Error(cuerpoError?.error || `Error ${respuesta.status}: No se pudo conectar con la API.`)
           }
 
           const data = await respuesta.json()

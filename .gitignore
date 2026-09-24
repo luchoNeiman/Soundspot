@@ -19,6 +19,9 @@ coverage
 .env.*
 !.env.example
 
+# Carpeta local que crea el CLI de Vercel (config del proyecto vinculado)
+.vercel
+
 /cypress/videos/
 /cypress/screenshots/
 
