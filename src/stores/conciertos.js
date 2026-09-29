@@ -19,6 +19,8 @@ function transformarDatosApi(evento) {
     artista: evento._embedded?.attractions?.[0]?.name || evento.name,
     lugar: venue?.name || 'Lugar a confirmar',
     ciudad: venue?.city?.name || 'Ciudad no disponible',
+    paisCodigo: venue?.country?.countryCode || null,
+    paisNombre: venue?.country?.name || null,
     fecha: evento.dates?.start?.localDate || 'Fecha a confirmar',
     genero: evento.classifications?.[0]?.genre?.name || 'Sin género definido',
     web: evento.url || null,
@@ -56,7 +58,9 @@ export const useConciertosStore = defineStore('conciertos', () => {
   const estaCargando = ref(false)
   const errorApi = ref(null)
   const resultadosLimitados = ref(false)
-  const paisConsultado = ref('US')
+  // '' = "Todos los países": es el punto de partida para poder armar la
+  // lista de países disponibles a partir de datos reales de la API.
+  const paisConsultado = ref('')
   const eventosUsuario = ref(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'))
   let controladorConsulta = null
 
@@ -76,6 +80,17 @@ export const useConciertosStore = defineStore('conciertos', () => {
   const artistasDisponibles = computed(() => {
     const artistas = new Set(conciertos.value.map((concierto) => concierto.artista))
     return Array.from(artistas).sort()
+  })
+  // Solo los países que efectivamente tienen conciertos en los resultados
+  // ya cargados: se recalcula solo cada vez que "conciertos" cambia.
+  const paisesDisponibles = computed(() => {
+    const paises = new Map()
+    for (const concierto of conciertos.value) {
+      if (concierto.paisCodigo && !paises.has(concierto.paisCodigo)) {
+        paises.set(concierto.paisCodigo, concierto.paisNombre || concierto.paisCodigo)
+      }
+    }
+    return Array.from(paises, ([valor, nombre]) => ({ valor, nombre })).sort((a, b) => a.nombre.localeCompare(b.nombre))
   })
 
   async function buscarConciertos(pais = paisConsultado.value, forzar = false) {
@@ -170,6 +185,7 @@ export const useConciertosStore = defineStore('conciertos', () => {
     ciudadesDisponibles,
     generosDisponibles,
     artistasDisponibles,
+    paisesDisponibles,
     buscarConciertos,
     alternarAsistencia,
     vaAAsistir

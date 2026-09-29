@@ -58,42 +58,31 @@ function manejarAsistencia() {
     }
 }
 
-function textoCalendario(valor) {
-    return String(valor || '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n')
-}
-
 function fechaCalendario(fecha) {
     return [fecha.getFullYear(), String(fecha.getMonth() + 1).padStart(2, '0'), String(fecha.getDate()).padStart(2, '0')].join('')
 }
 
-function agregarAlCalendario() {
-    if (!concierto.value || !/^\d{4}-\d{2}-\d{2}$/.test(concierto.value.fecha)) return
+// Link directo al formulario de "crear evento" de Google Calendar, ya
+// completado con los datos del concierto (evento de día completo, ya que la
+// API de Ticketmaster no siempre da un horario preciso). No hace falta login
+// ni backend: Google arma la pantalla de confirmación a partir de la URL.
+const urlGoogleCalendar = computed(() => {
+    if (!concierto.value || !/^\d{4}-\d{2}-\d{2}$/.test(concierto.value.fecha)) return null
 
     const [anio, mes, dia] = concierto.value.fecha.split('-').map(Number)
     const inicio = new Date(anio, mes - 1, dia)
     const fin = new Date(anio, mes - 1, dia + 1)
-    const contenido = [
-        'BEGIN:VCALENDAR',
-        'VERSION:2.0',
-        'PRODID:-//SoundSpot//ES',
-        'BEGIN:VEVENT',
-        `UID:${concierto.value.id}@soundspot`,
-        `DTSTART;VALUE=DATE:${fechaCalendario(inicio)}`,
-        `DTEND;VALUE=DATE:${fechaCalendario(fin)}`,
-        `SUMMARY:${textoCalendario(concierto.value.artista)}`,
-        `LOCATION:${textoCalendario(`${concierto.value.lugar}, ${concierto.value.ciudad}`)}`,
-        concierto.value.web ? `URL:${textoCalendario(concierto.value.web)}` : '',
-        'END:VEVENT',
-        'END:VCALENDAR'
-    ].filter(Boolean).join('\r\n')
 
-    const url = URL.createObjectURL(new Blob([contenido], { type: 'text/calendar;charset=utf-8' }))
-    const enlace = document.createElement('a')
-    enlace.href = url
-    enlace.download = `${concierto.value.artista.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.ics`
-    enlace.click()
-    URL.revokeObjectURL(url)
-}
+    const parametros = new URLSearchParams({
+        action: 'TEMPLATE',
+        text: concierto.value.artista,
+        dates: `${fechaCalendario(inicio)}/${fechaCalendario(fin)}`,
+        location: `${concierto.value.lugar}, ${concierto.value.ciudad}`
+    })
+    if (concierto.value.web) parametros.set('details', `Entradas: ${concierto.value.web}`)
+
+    return `https://calendar.google.com/calendar/render?${parametros.toString()}`
+})
 
 // Lógica del Mapa Leaflet
 // Leaflet es una librería para mostrar mapas interactivos
@@ -240,9 +229,9 @@ function volverAtras() {
                     <a v-if="concierto.web" :href="concierto.web" target="_blank" rel="noopener" class="btn btn-primary">
                         <i class="bi bi-ticket-perforated me-2" aria-hidden="true"></i> Ver entradas
                     </a>
-                    <button @click="agregarAlCalendario" class="btn btn-outline-light">
-                        <i class="bi bi-calendar-plus me-2" aria-hidden="true"></i> Agregar al calendario
-                    </button>
+                    <a v-if="urlGoogleCalendar" :href="urlGoogleCalendar" target="_blank" rel="noopener" class="btn btn-outline-light">
+                        <i class="bi bi-calendar-plus me-2" aria-hidden="true"></i> Agregar a Google Calendar
+                    </a>
                     <button @click="volverAtras" class="btn btn-secondary">
                         <i class="bi bi-arrow-left me-2" aria-hidden="true"></i> Volver al listado
                     </button>

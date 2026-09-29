@@ -16,7 +16,7 @@ const filtroMes = ref(0) // 0 = Todos los Meses
 const filtroAnio = ref(0) // 0 = Todos los Años
 const filtroPrecioMin = ref(null)
 const filtroPrecioMax = ref(null)
-const filtroPais = ref('US')
+const filtroPais = ref('') // '' = Todos los países
 const cantidadVisible = ref(12)
 
 const ubicacionUsuario = ref(null)

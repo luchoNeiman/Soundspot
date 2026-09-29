@@ -12,7 +12,7 @@ const mes = defineModel('mes', { default: 0 })
 const anio = defineModel('anio', { default: 0 })
 const precioMin = defineModel('precioMin', { default: null })
 const precioMax = defineModel('precioMax', { default: null })
-const pais = defineModel('pais', { default: 'US' })
+const pais = defineModel('pais', { default: '' })
 
 const props = defineProps({
     buscandoUbicacion: { type: Boolean, default: false },
@@ -20,17 +20,6 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['buscarUbicacion'])
-
-const paises = [
-    { valor: '', nombre: 'Todos los países' },
-    { valor: 'US', nombre: 'Estados Unidos' },
-    { valor: 'AR', nombre: 'Argentina' },
-    { valor: 'BR', nombre: 'Brasil' },
-    { valor: 'CA', nombre: 'Canadá' },
-    { valor: 'ES', nombre: 'España' },
-    { valor: 'GB', nombre: 'Reino Unido' },
-    { valor: 'MX', nombre: 'México' }
-]
 
 const meses = [
     { valor: 0, nombre: 'Todos los meses' },
@@ -52,9 +41,9 @@ const anios = computed(() => {
 
 const isMobileOrTablet = computed(() => windowWidth.value < 992)
 
-// Mientras se están cargando los conciertos del país elegido, las listas de
-// ciudades/artistas/géneros pueden estar vacías o desactualizadas: deshabilito
-// esos selects para que no se puedan elegir valores que todavía no cargaron.
+// Mientras se están cargando los conciertos, las listas de países/ciudades/
+// artistas/géneros pueden estar vacías o desactualizadas: deshabilito esos
+// selects para que no se puedan elegir valores que todavía no cargaron.
 const filtrosDependientesDeshabilitados = computed(() => storeConciertos.estaCargando)
 
 function restablecerFiltros() {
@@ -82,8 +71,12 @@ onUnmounted(() => window.removeEventListener('resize', actualizarAncho))
 
             <div class="col-lg-2 col-md-4 col-sm-6">
                 <label for="filtroPais" class="form-label">País:</label>
-                <select id="filtroPais" v-model="pais" class="form-select" aria-label="Filtrar por país">
-                    <option v-for="opcion in paises" :key="opcion.valor" :value="opcion.valor">{{ opcion.nombre }}</option>
+                <select id="filtroPais" v-model="pais" class="form-select"
+                    aria-label="Filtrar por país" :disabled="filtrosDependientesDeshabilitados">
+                    <option value="">Todos los países</option>
+                    <option v-for="opcion in storeConciertos.paisesDisponibles" :key="opcion.valor" :value="opcion.valor">
+                        {{ opcion.nombre }}
+                    </option>
                 </select>
             </div>
 
